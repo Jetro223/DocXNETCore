@@ -1,7 +1,6 @@
 ﻿using System;
+using Novacode.NETCorePort;
 using System.ComponentModel;
-using DocX.NETCorePort;
-
 namespace Novacode
 {
 

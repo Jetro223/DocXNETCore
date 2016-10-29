@@ -7,7 +7,7 @@ using System.IO.Packaging;
 using System.Globalization;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using DocX.NETCorePort;
+using Novacode.NETCorePort;
 
 
 namespace Novacode

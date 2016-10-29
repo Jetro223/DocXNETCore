@@ -16,6 +16,8 @@ Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Console_NETCore", "src\Cons
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Console_NET452", "ConsoleApplication1\Console_NET452.csproj", "{E0357C33-1D97-44AB-9D44-60FFA638D2C7}"
 EndProject
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "DocX.UnitTest", "src\DocX.UnitTest\DocX.UnitTest.xproj", "{4B113D33-3707-43A9-98F5-FAB24C80FDD8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -34,6 +36,10 @@ Global
 		{E0357C33-1D97-44AB-9D44-60FFA638D2C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E0357C33-1D97-44AB-9D44-60FFA638D2C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E0357C33-1D97-44AB-9D44-60FFA638D2C7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4B113D33-3707-43A9-98F5-FAB24C80FDD8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4B113D33-3707-43A9-98F5-FAB24C80FDD8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4B113D33-3707-43A9-98F5-FAB24C80FDD8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4B113D33-3707-43A9-98F5-FAB24C80FDD8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -41,5 +47,6 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{AA5D4778-4829-4EED-8957-19EE51E2DE5E} = {71370A98-6061-43F8-996D-E1D67B8E522E}
 		{0D48678C-6038-4AF2-9EB8-936FF18CFFED} = {71370A98-6061-43F8-996D-E1D67B8E522E}
+		{4B113D33-3707-43A9-98F5-FAB24C80FDD8} = {71370A98-6061-43F8-996D-E1D67B8E522E}
 	EndGlobalSection
 EndGlobal

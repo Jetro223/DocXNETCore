@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
 using System.Collections;
-using DocX.NETCorePort;
+using Novacode.NETCorePort;
 using System.Reflection;
 
 namespace Novacode

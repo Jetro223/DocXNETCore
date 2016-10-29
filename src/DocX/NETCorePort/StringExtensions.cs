@@ -1,4 +1,4 @@
-﻿namespace DocX.NETCorePort
+﻿namespace Novacode.NETCorePort
 {
     public static class StringExtensions
     {

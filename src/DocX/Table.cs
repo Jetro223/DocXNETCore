@@ -5,7 +5,7 @@ using System.Xml.Linq;
 using System.IO.Packaging;
 using System.IO;
 using System.Collections.ObjectModel;
-using DocX.NETCorePort;
+using Novacode.NETCorePort;
 
 namespace Novacode
 {

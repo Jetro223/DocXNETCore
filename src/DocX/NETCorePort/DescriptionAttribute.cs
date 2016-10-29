@@ -1,7 +1,7 @@
 ﻿using System;
 
 #if NETSTANDARD1_6
-namespace DocX.NETCorePort
+namespace Novacode.NETCorePort
 {
 
     public class DescriptionAttribute:Attribute

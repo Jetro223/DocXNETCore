@@ -1,4 +1,4 @@
-﻿using DocX.NETCorePort;
+﻿using Novacode.NETCorePort;
 
 namespace Novacode
 {

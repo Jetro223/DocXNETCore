@@ -13,7 +13,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyCopyright("DocX @ 2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
-
+[assembly: InternalsVisibleTo("DocX.UnitTest")]
 // Allow the UnitTests to get at internal stuff.
 [assembly: InternalsVisibleTo("UnitTests")]
 

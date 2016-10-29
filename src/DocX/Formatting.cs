@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Xml.Linq;
 using System.Globalization;
-using DocX.NETCorePort;
+using Novacode.NETCorePort;
 
 namespace Novacode
 {

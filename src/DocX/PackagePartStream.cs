@@ -60,20 +60,21 @@ namespace Novacode
 
         public override void Write(byte[] buffer, int offset, int count)
         {
-           // Mutex.WaitOne(Timeout.Infinite);
+            Mutex.WaitOne(Timeout.Infinite);
             this.stream.Write(buffer, offset, count);
-            //Mutex.ReleaseMutex();
+            Mutex.ReleaseMutex();
         }
 
         public override void Flush()
         {
-           // Mutex.WaitOne(Timeout.Infinite);
+            Mutex.WaitOne(Timeout.Infinite);
             this.stream.Flush();
-            // Mutex.ReleaseMutex();
+            Mutex.ReleaseMutex();
         }
 
         protected override void Dispose(bool disposing)
         {
+            this.stream.Flush();
             this.stream.Dispose();
         }
     }

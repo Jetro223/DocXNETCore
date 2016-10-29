@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.IO;
 using Novacode;
-using DocX = Novacode.DocX;
 
 namespace ConsoleApp1
 {
@@ -11,7 +8,8 @@ namespace ConsoleApp1
     {
         public static void Main(string[] args)
         {
-            var doc = Novacode.DocX.Load(@"Test.docx");
+            var ms = new MemoryStream();
+            var doc = Novacode.DocX.Load(@"Test.docx", ms);
 
             Hyperlink h = doc.AddHyperlink("Google", new Uri("http://www.google.com"));
 
@@ -21,7 +19,11 @@ namespace ConsoleApp1
             p.AppendHyperlink(h);
             p.Append(", I think it's great.");
             doc.Paragraphs[0].Append("blahblah").Bold();
-            doc.Save();
+
+            // Add header support to this document.
+
+            oc.SaveAs(@"Copy2.docx");
+
         }
     }
 }

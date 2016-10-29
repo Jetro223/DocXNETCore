@@ -2739,9 +2739,8 @@ namespace Novacode
         {
             if (!File.Exists(filename))
                 throw new FileNotFoundException(string.Format("File could not be found {0}", filename));
-
+            
             MemoryStream ms = new MemoryStream();
-
             using (FileStream fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 byte[] data = new byte[fs.Length];
@@ -2756,7 +2755,7 @@ namespace Novacode
             document.package = package;
             document.filename = filename;
             document.memoryStream = ms;
-
+            
             return document;
         }
 
@@ -3449,7 +3448,7 @@ namespace Novacode
             // Save the main document
             using (TextWriter tw = new StreamWriter(new PackagePartStream(mainPart.GetStream(FileMode.Create, FileAccess.Write))))
                 mainDoc.Save(tw, SaveOptions.None);
-
+            
             if (settings == null)
             {
                 using (TextReader tr = new StreamReader(settingsPart.GetStream()))
@@ -3673,7 +3672,8 @@ namespace Novacode
 
             // Close the document so that it can be saved.
             package.Flush();
-
+            package.Close();
+     
             #region Save this document back to a file or stream, that was specified by the user at save time.
             if (filename != null)
             {

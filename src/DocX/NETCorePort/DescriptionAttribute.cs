@@ -1,7 +1,9 @@
 ﻿using System;
 
+#if NETSTANDARD1_6
 namespace DocX.NETCorePort
 {
+
     public class DescriptionAttribute:Attribute
     {
         public DescriptionAttribute(string description)
@@ -12,3 +14,4 @@ namespace DocX.NETCorePort
         public string Description { get; }
     }
 }
+#endif

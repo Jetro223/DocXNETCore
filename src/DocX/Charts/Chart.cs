@@ -4,6 +4,7 @@ using System.Linq;
 using System.Xml.Linq;
 using System.Collections;
 using DocX.NETCorePort;
+using System.Reflection;
 
 namespace Novacode
 {
@@ -334,29 +335,28 @@ namespace Novacode
 
         public void Bind(ICollection list, String categoryPropertyName, String valuePropertyName)
         {
-            throw new NotSupportedException("Not supported in .NET Core");
-            //XElement ptCount = new XElement(XName.Get("ptCount", DocX.c.NamespaceName), new XAttribute(XName.Get("val"), list.Count));
-            //XElement formatCode = new XElement(XName.Get("formatCode", DocX.c.NamespaceName), "General");
+            XElement ptCount = new XElement(XName.Get("ptCount", DocX.c.NamespaceName), new XAttribute(XName.Get("val"), list.Count));
+            XElement formatCode = new XElement(XName.Get("formatCode", DocX.c.NamespaceName), "General");
 
-            //strCache.RemoveAll();
-            //numCache.RemoveAll();
+            strCache.RemoveAll();
+            numCache.RemoveAll();
 
-            //strCache.Add(ptCount);
-            //numCache.Add(formatCode);
-            //numCache.Add(ptCount);
+            strCache.Add(ptCount);
+            numCache.Add(formatCode);
+            numCache.Add(ptCount);
 
-            //Int32 index = 0;
-            //XElement pt;
-            //foreach (var item in list)
-            //{
-            //    pt = new XElement(XName.Get("pt", DocX.c.NamespaceName), new XAttribute(XName.Get("idx"), index),
-            //        new XElement(XName.Get("v", DocX.c.NamespaceName), item.GetType().GetProperty(categoryPropertyName).GetValue(item, null)));
-            //    strCache.Add(pt);
-            //    pt = new XElement(XName.Get("pt", DocX.c.NamespaceName), new XAttribute(XName.Get("idx"), index),
-            //        new XElement(XName.Get("v", DocX.c.NamespaceName), item.GetType().GetProperty(valuePropertyName).GetValue(item, null)));
-            //    numCache.Add(pt);
-            //    index++;
-            //}
+            Int32 index = 0;
+            XElement pt;
+            foreach (var item in list)
+            {
+                pt = new XElement(XName.Get("pt", DocX.c.NamespaceName), new XAttribute(XName.Get("idx"), index),
+                    new XElement(XName.Get("v", DocX.c.NamespaceName), item.GetType().GetProperty(categoryPropertyName).GetValue(item, null)));
+                strCache.Add(pt);
+                pt = new XElement(XName.Get("pt", DocX.c.NamespaceName), new XAttribute(XName.Get("idx"), index),
+                    new XElement(XName.Get("v", DocX.c.NamespaceName), item.GetType().GetProperty(valuePropertyName).GetValue(item, null)));
+                numCache.Add(pt);
+                index++;
+            }
         }
 
         public void Bind(IList categories, IList values)

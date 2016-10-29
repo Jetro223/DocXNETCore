@@ -8,8 +8,7 @@ namespace ConsoleApp1
     {
         public static void Main(string[] args)
         {
-            var ms = new MemoryStream();
-            var doc = Novacode.DocX.Load(@"Test.docx", ms);
+            var doc = Novacode.DocX.Load(@"Test.docx");
 
             Hyperlink h = doc.AddHyperlink("Google", new Uri("http://www.google.com"));
 
@@ -22,7 +21,7 @@ namespace ConsoleApp1
 
             // Add header support to this document.
 
-            oc.SaveAs(@"Copy2.docx");
+            doc.SaveAs(@"Copy2.docx");
 
         }
     }

@@ -307,18 +307,8 @@ namespace Novacode
             // XDocument to load the compressed Xml resource into.
             XDocument document = new XDocument();
 
-            var assemblyNames = Assembly.GetEntryAssembly().GetReferencedAssemblies();
-            AssemblyName assemblyName = new AssemblyName();
-            foreach (var name in assemblyNames)
-            {
-                if (name.Name == "DocX")
-                    assemblyName = name;
-            }
-
-            // Get a reference to the executing assembly.
-            var assembly = Assembly.Load(assemblyName);
-            //Assembly assembly = Assembly.GetExecutingAssembly();
-
+            var assembly = typeof(DocX).GetTypeInfo().Assembly;
+            
             // Open a Stream to the embedded resource.
             Stream stream = assembly.GetManifestResourceStream(manifest_resource_name.Replace("Novacode", "DocX"));
 

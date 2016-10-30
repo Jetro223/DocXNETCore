@@ -35,7 +35,7 @@ namespace UnitTests
         }
         public RelativeDirectory()
         {
-            _dirInfo = new DirectoryInfo(Assembly.GetEntryAssembly().Location); //TODO
+            _dirInfo = new DirectoryInfo(Assembly.GetEntryAssembly().Location);
         }
 
         public RelativeDirectory(string absoluteDir)

@@ -1058,7 +1058,7 @@ namespace UnitTests
                 var formatting = new DocXFormatting();
                 formatting.FontColor = "eaeaea";
                 // IMPORTANT: default constructor of Formatting sets up language property - set it to NULL to be language independent
-                var desiredFormat = new DocXFormatting() { Language = null, FontColor = "ffffff", Highlight = Highlight.yellow };
+                var desiredFormat = new DocXFormatting() { Language = null, FontColor = "ff0000", Highlight = Highlight.yellow };
                 var replaced = string.Empty;
                 foreach (var p in document.Paragraphs)
                 {
@@ -1503,7 +1503,6 @@ namespace UnitTests
                 Table t1 = document.InsertTable(t);
 
                 t1.DeleteAndShiftCellsLeft(0, 1);
-                document.Save();
                 document.Save();
             }
         }

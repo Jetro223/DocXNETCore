@@ -8,7 +8,7 @@ namespace UnitTests
     {
         static TestHelper()
         {
-            string baseDirectory = Assembly.GetEntryAssembly().Location;
+            string baseDirectory = System.AppContext.BaseDirectory;
 
             DirectoryWithFiles = Path.Combine(baseDirectory, "documents");
         }

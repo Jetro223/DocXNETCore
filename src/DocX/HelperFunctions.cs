@@ -6,10 +6,9 @@ using System.IO.Compression;
 using System.IO.Packaging;
 using System.Linq;
 using System.Reflection;
+using System.Security.Principal;
 using System.Text;
 using System.Xml.Linq;
-using System.Xml;
-using Microsoft.Extensions.DependencyModel;
 
 namespace Novacode
 {
@@ -48,7 +47,7 @@ namespace Novacode
         }
         internal static void CreateRelsPackagePart(DocX Document, Uri uri)
         {
-            PackagePart pp = Document.package.CreatePart(uri, "application/vnd.openxmlformats-package.relationships+xml", CompressionOption.Maximum);
+            PackagePart pp = Document.package.CreatePart(uri, DocX.contentTypeApplicationRelationShipXml, CompressionOption.Maximum);
             using (TextWriter tw = new StreamWriter(new PackagePartStream(pp.GetStream())))
             {
                 XDocument d = new XDocument
@@ -305,12 +304,18 @@ namespace Novacode
         internal static XDocument DecompressXMLResource(string manifest_resource_name)
         {
             // XDocument to load the compressed Xml resource into.
-            XDocument document = new XDocument();
+            XDocument document;
 
-            var assembly = typeof(DocX).GetTypeInfo().Assembly;
-            
+            // Get a reference to the executing assembly.
+            //Assembly assembly = Assembly.GetEntryAssembly();
+            Assembly assembly = typeof(HelperFunctions).GetTypeInfo().Assembly;
+
             // Open a Stream to the embedded resource.
             Stream stream = assembly.GetManifestResourceStream(manifest_resource_name.Replace("Novacode", "DocX"));
+
+            int i = 0;
+            foreach (string resource in assembly.GetManifestResourceNames())
+                i += 1;
 
             // Decompress the embedded resource.
             using (GZipStream zip = new GZipStream(stream, CompressionMode.Decompress))
@@ -322,7 +327,7 @@ namespace Novacode
                 }
             }
 
-            //// Return the decompressed Xml as an XDocument.
+            // Return the decompressed Xml as an XDocument.
             return document;
         }
 
@@ -406,7 +411,7 @@ namespace Novacode
             (
                 new XElement(DocX.w + t.ToString(),
                     new XAttribute(DocX.w + "id", 0),
-                    new XAttribute(DocX.w + "author", "DocX .NET Core"),
+                    new XAttribute(DocX.w + "author", WindowsIdentity.GetCurrent().Name),
                     new XAttribute(DocX.w + "date", edit_time),
                 content)
             );
@@ -524,13 +529,13 @@ namespace Novacode
         internal static Paragraph GetFirstParagraphEffectedByInsert(DocX document, int index)
         {
             // This document contains no Paragraphs and insertion is at index 0
-            if (document.paragraphLookup.Keys.Count() == 0 && index == 0)
+            if (document.Paragraphs.Count() == 0 && index == 0)
                 return null;
 
-            foreach (int paragraphEndIndex in document.paragraphLookup.Keys)
+            foreach (Paragraph p in document.Paragraphs)
             {
-                if (paragraphEndIndex >= index)
-                    return document.paragraphLookup[paragraphEndIndex];
+                if (p.endIndex >= index)
+                    return p;
             }
 
             throw new ArgumentOutOfRangeException();

@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Linq;
 using System.Xml.Linq;
+using System.Drawing;
 using System.Globalization;
-using Novacode.NETCorePort;
-
 namespace Novacode
 {
     /// <summary>
@@ -19,8 +18,8 @@ namespace Novacode
 		private Script? script;
 		private Highlight? highlight;
 		private double? size;
-		private string fontColor;
-		private string underlineColor;
+		private Color? fontColor;
+		private Color? underlineColor;
 		private UnderlineStyle? underlineStyle;
 		private Misc? misc;
 		private CapsStyle? capsStyle;
@@ -144,15 +143,18 @@ namespace Novacode
                         try
                         {
                             string color = option.GetAttribute(XName.Get("val", DocX.w.NamespaceName));
-                            formatting.FontColor = color;
+                            formatting.FontColor = System.Drawing.ColorTranslator.FromHtml(string.Format("#{0}", color));
                         }
                         catch { }
                         break;
                     case "vanish": formatting.hidden = true; break;
                     case "b": formatting.Bold = true; break;
                     case "i": formatting.Italic = true; break;
-                    case "u": formatting.UnderlineStyle = HelperFunctions.GetUnderlineStyle(option.GetAttribute(XName.Get("val", DocX.w.NamespaceName)));
-                              break;
+                    case "u": formatting.UnderlineStyle = HelperFunctions.GetUnderlineStyle(option.GetAttribute(XName.Get("val", DocX.w.NamespaceName))); break;
+                    case "vertAlign":
+                        var script = option.GetAttribute(XName.Get("val", DocX.w.NamespaceName), null);
+                        formatting.Script = (Script)Enum.Parse(typeof(Script), script);
+                        break;
                     default: break;
                 }
             }
@@ -223,7 +225,7 @@ namespace Novacode
 					}
 				}
 
-                if(underlineColor.HasValue())
+                if(underlineColor.HasValue)
                 {
                     // If an underlineColor has been set but no underlineStyle has been set
                     if (underlineStyle == Novacode.UnderlineStyle.none)
@@ -233,7 +235,7 @@ namespace Novacode
                         rPr.Add(new XElement(XName.Get("u", DocX.w.NamespaceName), new XAttribute(XName.Get("val", DocX.w.NamespaceName), "single")));
                     }
 
-                    rPr.Element(XName.Get("u", DocX.w.NamespaceName)).Add(new XAttribute(XName.Get("color", DocX.w.NamespaceName), underlineColor.ToHex()));
+                    rPr.Element(XName.Get("u", DocX.w.NamespaceName)).Add(new XAttribute(XName.Get("color", DocX.w.NamespaceName), underlineColor.Value.ToHex()));
                 }
 
 				if (strikethrough.HasValue)
@@ -271,8 +273,8 @@ namespace Novacode
                     rPr.Add(new XElement(XName.Get("szCs", DocX.w.NamespaceName), new XAttribute(XName.Get("val", DocX.w.NamespaceName), (size * 2).ToString())));
                 }
 
-                if(fontColor.HasValue())
-                    rPr.Add(new XElement(XName.Get("color", DocX.w.NamespaceName), new XAttribute(XName.Get("val", DocX.w.NamespaceName), fontColor.ToHex())));
+                if(fontColor.HasValue)
+                    rPr.Add(new XElement(XName.Get("color", DocX.w.NamespaceName), new XAttribute(XName.Get("val", DocX.w.NamespaceName), fontColor.Value.ToHex())));
 
 				if (highlight.HasValue)
 				{
@@ -440,7 +442,7 @@ namespace Novacode
         /// <summary>
         /// The colour of the text.
         /// </summary>
-        public string FontColor { get { return fontColor; } set { fontColor = value; } }
+        public Color? FontColor { get { return fontColor; } set { fontColor = value; } }
 
         /// <summary>
         /// Highlight colour.
@@ -455,7 +457,7 @@ namespace Novacode
         /// <summary>
         /// The underline colour.
         /// </summary>
-        public string UnderlineColor { get { return underlineColor; } set { underlineColor = value; } }
+        public Color? UnderlineColor { get { return underlineColor; } set { underlineColor = value; } }
         
         /// <summary>
         /// Misc settings.

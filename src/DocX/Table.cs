@@ -4,8 +4,9 @@ using System.Linq;
 using System.Xml.Linq;
 using System.IO.Packaging;
 using System.IO;
+using System.Drawing;
+using System.Globalization;
 using System.Collections.ObjectModel;
-using Novacode.NETCorePort;
 
 namespace Novacode
 {
@@ -54,7 +55,7 @@ namespace Novacode
              * Get the tcPr (table cell properties) element for the first cell in this merge,
             * null will be returned if no such element exists.
              */
-            XElement start_tcPr = null;
+            XElement start_tcPr;
             if (columnIndex > Rows[startRow].Cells.Count)
                 start_tcPr = Rows[startRow].Cells[Rows[startRow].Cells.Count - 1].Xml.Element(XName.Get("tcPr", DocX.w.NamespaceName));
             else
@@ -87,7 +88,7 @@ namespace Novacode
         {
             get
             {
-                List<Paragraph> paragraphs = new List<Paragraph>();
+                var paragraphs = new List<Paragraph>();
 
                 foreach (Row r in Rows)
                     paragraphs.AddRange(r.Paragraphs);
@@ -122,7 +123,7 @@ namespace Novacode
         {
             get
             {
-                List<Picture> pictures = new List<Picture>();
+                var pictures = new List<Picture>();
 
                 foreach (Row r in Rows)
                     pictures.AddRange(r.Pictures);
@@ -185,7 +186,7 @@ namespace Novacode
         {
             get
             {
-                List<Hyperlink> hyperlinks = new List<Hyperlink>();
+                var hyperlinks = new List<Hyperlink>();
 
                 foreach (Row r in Rows)
                     hyperlinks.AddRange(r.Hyperlinks);
@@ -218,7 +219,7 @@ namespace Novacode
         {
             if (totalWidth == null) totalWidth = this.Document.PageWidth - this.Document.MarginLeft - this.Document.MarginRight; // calculate total table width 
             List<float> widths = new List<float>(widthsPercentage.Length); // empty list, will hold actual width 
-            widthsPercentage.ToList().ForEach(pWidth => { widths.Add(pWidth * totalWidth.Value / 100); }); // convert percentage to actual width for all values in array 
+            widthsPercentage.ToList().ForEach(pWidth => { widths.Add((pWidth * totalWidth.Value / 100) * (96 / 72)); }); // convert percentage to actual width for all values in array 
             SetWidths(widths.ToArray()); // set actual column width
         }
 
@@ -243,6 +244,7 @@ namespace Novacode
             return tblPr;
         }
 
+#pragma warning disable CS1584 // XML comment has syntactically incorrect cref attribute
         /// <summary>
         /// Set the specified cell margin for the table-level.
         /// </summary>
@@ -250,6 +252,7 @@ namespace Novacode
         /// <param name="margin">The value for the specified cell margin.</param>
         /// <remarks>More information can be found <see cref="http://msdn.microsoft.com/en-us/library/documentformat.openxml.wordprocessing.tablecellmargindefault.aspx">here</see></remarks>
         public void SetTableCellMargin(TableCellMarginType type, double margin)
+#pragma warning restore CS1584 // XML comment has syntactically incorrect cref attribute
         {
             XElement tblPr = GetOrCreate_tblPr();
 
@@ -322,22 +325,18 @@ namespace Novacode
             }
 
             // remove all existing values
-            grid.RemoveAll();
+            grid?.RemoveAll();
 
             // append new column widths
-            XElement gridCol = null;
             Int32 i = 0;
-            Double value = width;
-            Double total = 0;
             foreach (var w in widths)
             {
-                value = w;
+                double value = w;
                 if (i == index) value = width;
-                gridCol = new XElement(XName.Get("gridCol", DocX.w.NamespaceName),
-                          new XAttribute(XName.Get("w", DocX.w.NamespaceName), value));
-                grid.Add(gridCol);
+                var gridCol = new XElement(XName.Get("gridCol", DocX.w.NamespaceName),
+                    new XAttribute(XName.Get("w", DocX.w.NamespaceName), value));
+                grid?.Add(gridCol);
                 i += 1;
-                total += value;
             }
 
             // remove cell widths
@@ -357,19 +356,17 @@ namespace Novacode
         {
             get
             {
-                List<Double> widths = new List<Double>();
+                var widths = new List<Double>();
                 // get the table grid props
                 XElement grid = Xml.Element(XName.Get("tblGrid", DocX.w.NamespaceName));
-                if (grid == null) return null;
 
                 // get col properties
-                var cols = grid.Elements(XName.Get("gridCol", DocX.w.NamespaceName));
+                var cols = grid?.Elements(XName.Get("gridCol", DocX.w.NamespaceName));
                 if (cols == null) return null;
 
-                String value = String.Empty;
                 foreach (var col in cols)
                 {
-                    value = col.GetAttribute(XName.Get("w", DocX.w.NamespaceName));
+                    string value = col.GetAttribute(XName.Get("w", DocX.w.NamespaceName));
                     widths.Add(Convert.ToDouble(value));
                 }
                 return widths;
@@ -433,19 +430,19 @@ namespace Novacode
 
             XElement properties = xml.Element(XName.Get("tblPr", DocX.w.NamespaceName));
 
-            XElement style = properties.Element(XName.Get("tblStyle", DocX.w.NamespaceName));
+            XElement style = properties?.Element(XName.Get("tblStyle", DocX.w.NamespaceName));
             if (style != null)
             {
                 XAttribute val = style.Attribute(XName.Get("val", DocX.w.NamespaceName));
 
                 if (val != null)
                 {
-                    try
+                    String cleanValue = val.Value.Replace("-", string.Empty);
+                    if (Enum.IsDefined(typeof(TableDesign), cleanValue))
                     {
-                        design = (TableDesign)Enum.Parse(typeof(TableDesign), val.Value.Replace("-", string.Empty));
+                        design = (TableDesign)Enum.Parse(typeof(TableDesign), cleanValue);
                     }
-
-                    catch (Exception)
+                    else
                     {
                         design = TableDesign.Custom;
                     }
@@ -457,16 +454,18 @@ namespace Novacode
             else
                 design = TableDesign.None;
 
-            XElement tableLook = properties.Element(XName.Get("tblLook", DocX.w.NamespaceName));
+            XElement tableLook = properties?.Element(XName.Get("tblLook", DocX.w.NamespaceName));
             if (tableLook != null)
             {
-                TableLook = new TableLook();
-                TableLook.FirstRow = tableLook.GetAttribute(XName.Get("firstRow", DocX.w.NamespaceName)) == "1";
-                TableLook.LastRow = tableLook.GetAttribute(XName.Get("lastRow", DocX.w.NamespaceName)) == "1";
-                TableLook.FirstColumn = tableLook.GetAttribute(XName.Get("firstColumn", DocX.w.NamespaceName)) == "1";
-                TableLook.LastColumn = tableLook.GetAttribute(XName.Get("lastColumn", DocX.w.NamespaceName)) == "1";
-                TableLook.NoHorizontalBanding = tableLook.GetAttribute(XName.Get("noHBand", DocX.w.NamespaceName)) == "1";
-                TableLook.NoVerticalBanding = tableLook.GetAttribute(XName.Get("noVBand", DocX.w.NamespaceName)) == "1";
+                TableLook = new TableLook
+                {
+                    FirstRow = tableLook.GetAttribute(XName.Get("firstRow", DocX.w.NamespaceName)) == "1",
+                    LastRow = tableLook.GetAttribute(XName.Get("lastRow", DocX.w.NamespaceName)) == "1",
+                    FirstColumn = tableLook.GetAttribute(XName.Get("firstColumn", DocX.w.NamespaceName)) == "1",
+                    LastColumn = tableLook.GetAttribute(XName.Get("lastColumn", DocX.w.NamespaceName)) == "1",
+                    NoHorizontalBanding = tableLook.GetAttribute(XName.Get("noHBand", DocX.w.NamespaceName)) == "1",
+                    NoVerticalBanding = tableLook.GetAttribute(XName.Get("noVBand", DocX.w.NamespaceName)) == "1"
+                };
             }
 
         }
@@ -520,13 +519,10 @@ namespace Novacode
             get
             {
                 XElement tblPr = Xml.Element(XName.Get("tblPr", DocX.w.NamespaceName));
-                if (tblPr != null)
+                XElement caption = tblPr?.Element(XName.Get("tblCaption", DocX.w.NamespaceName));
+                if (caption != null)
                 {
-                    XElement caption = tblPr.Element(XName.Get("tblCaption", DocX.w.NamespaceName));
-                    if (caption != null)
-                    {
-                        _tableCaption = caption.GetAttribute(XName.Get("val", DocX.w.NamespaceName));
-                    }
+                    _tableCaption = caption.GetAttribute(XName.Get("val", DocX.w.NamespaceName));
                 }
                 return _tableCaption;
             }
@@ -549,8 +545,7 @@ namespace Novacode
                     XElement tblDescription =
                         tblPr.Descendants(XName.Get("tblDescription", DocX.w.NamespaceName)).FirstOrDefault();
 
-                    if (tblDescription != null)
-                        tblDescription.Remove();
+                    tblDescription?.Remove();
 
                     tblDescription = new XElement(XName.Get("tblDescription", DocX.w.NamespaceName),
                        new XAttribute(XName.Get("val", DocX.w.NamespaceName), value));
@@ -561,13 +556,10 @@ namespace Novacode
             get
             {
                 XElement tblPr = Xml.Element(XName.Get("tblPr", DocX.w.NamespaceName));
-                if (tblPr != null)
+                XElement caption = tblPr?.Element(XName.Get("tblDescription", DocX.w.NamespaceName));
+                if (caption != null)
                 {
-                    XElement caption = tblPr.Element(XName.Get("tblDescription", DocX.w.NamespaceName));
-                    if (caption != null)
-                    {
-                        _tableDescription = caption.GetAttribute(XName.Get("val", DocX.w.NamespaceName));
-                    }
+                    _tableDescription = caption.GetAttribute(XName.Get("val", DocX.w.NamespaceName));
                 }
                 return _tableDescription;
             }
@@ -613,8 +605,7 @@ namespace Novacode
                 XElement tblPr = Xml.Descendants(XName.Get("tblPr", DocX.w.NamespaceName)).First();
                 XElement jc = tblPr.Descendants(XName.Get("jc", DocX.w.NamespaceName)).FirstOrDefault();
 
-                if (jc != null)
-                    jc.Remove();
+                jc?.Remove();
 
                 jc = new XElement(XName.Get("jc", DocX.w.NamespaceName), new XAttribute(XName.Get("val", DocX.w.NamespaceName), alignmentString));
                 tblPr.Add(jc);
@@ -688,11 +679,8 @@ namespace Novacode
 
                             if (tblLayout == null)
                             {
-                                XElement tmp = tblPr.Element(XName.Get("tblInd", DocX.w.NamespaceName));
-                                if (tmp == null)
-                                {
-                                    tmp = tblPr.Element(XName.Get("tblW", DocX.w.NamespaceName));
-                                }
+                                XElement tmp = tblPr.Element(XName.Get("tblInd", DocX.w.NamespaceName)) ??
+                                               tblPr.Element(XName.Get("tblW", DocX.w.NamespaceName));
 
                                 tmp.AddAfterSelf(new XElement(XName.Get("tblLayout", DocX.w.NamespaceName)));
                                 tmp = tblPr.Element(XName.Get("tblLayout", DocX.w.NamespaceName));
@@ -793,10 +781,7 @@ namespace Novacode
                 design = value;
 
                 if (design == TableDesign.None)
-                {
-                    if (style != null)
-                        style.Remove();
-                }
+                    style.Remove();
 
                 if (design == TableDesign.Custom)
                 {
@@ -814,7 +799,6 @@ namespace Novacode
                 }
                 else
                 {
-
                     switch (design)
                     {
                         case TableDesign.TableNormal:
@@ -1121,11 +1105,9 @@ namespace Novacode
                         case TableDesign.ColorfulGridAccent6:
                             val.Value = "ColorfulGrid-Accent6";
                             break;
-
-                        default:
-                            break;
                     }
                 }
+
                 if (Document.styles == null)
                 {
                     PackagePart word_styles = Document.package.GetPart(new Uri("/word/styles.xml", UriKind.Relative));
@@ -1151,7 +1133,7 @@ namespace Novacode
                         let styleId = e.Attribute(XName.Get("styleId", DocX.w.NamespaceName))
                         where (styleId != null && styleId.Value == val.Value)
                         select e
-                    ).First();
+                    ).FirstOrDefault();
 
                     Document.styles.Element(XName.Get("styles", DocX.w.NamespaceName)).Add(styleElement);
                 }
@@ -1602,7 +1584,6 @@ namespace Novacode
                             }
                             else
                             {
-                                bool directionTest = true;
                                 var positionIndex = 1;
                                 var actualPosition = 1;
                                 var gridAfterVal = 0;
@@ -1625,7 +1606,8 @@ namespace Novacode
                                     if ((index - gridAfterVal) >= actualPosition
                                         && (index - gridAfterVal) <= (actualPosition + gridSpanVal))
                                     {
-                                        if (index == (actualPosition + gridSpanVal) && direction == true)
+                                        bool directionTest;
+                                        if (index == (actualPosition + gridSpanVal) && direction)
                                         {
                                             directionTest = true;
                                         }
@@ -1683,8 +1665,7 @@ namespace Novacode
         /// <param name="celIndex">index of the cell you want to remove</param>
         public void DeleteAndShiftCellsLeft(int rowIndex, int celIndex)
         {
-
-            XAttribute gridAfterVal = new XAttribute(XName.Get("val", DocX.w.NamespaceName), 0);
+            
             var trPr = Rows[rowIndex].Xml.Element(XName.Get("trPr", DocX.w.NamespaceName));
             if (trPr != null)
             {
@@ -1692,19 +1673,10 @@ namespace Novacode
                 if (gridAfter != null)
                 {
                     var val = gridAfter.Attribute(XName.Get("val", DocX.w.NamespaceName));
-                    if (val != null)
-                    {
-                        val.Value = (int.Parse(val.Value) + 1).ToString();
-                    }
-                    else
-                    {
-                        val.Value = "1";
-                    }
+                    val.Value = (int.Parse(val.Value) + 1).ToString();
                 }
                 else
                 {
-                    var gridAfterElement = new XElement("gridAfter");
-                    var gridAfterValAttribute = new XAttribute("val", 1);
                     gridAfter.SetAttributeValue("val", 1);
                 }
             }
@@ -2217,8 +2189,7 @@ namespace Novacode
 			 * Get the 'borderType' (table border) element for this Table,
 			 * null will be return if no such element exists.
 			 */
-            string tbordertype;
-            tbordertype = borderType.ToString();
+            var tbordertype = borderType.ToString();
             // only lower the first char of string (because of insideH and insideV)
             tbordertype = tbordertype.Substring(0, 1).ToLower() + tbordertype.Substring(1);
 
@@ -2260,7 +2231,7 @@ namespace Novacode
                 tblBorderType.SetAttributeValue(XName.Get("space", DocX.w.NamespaceName), (border.Space).ToString());
 
                 // The color attribute is used for the border color
-                tblBorderType.SetAttributeValue(XName.Get("color", DocX.w.NamespaceName), border.Color);
+                tblBorderType.SetAttributeValue(XName.Get("color", DocX.w.NamespaceName), border.Color.ToHex());
             }
         }
 
@@ -2274,10 +2245,8 @@ namespace Novacode
             // instance with default border values
             Border b = new Border();
 
-            /*
-             * Get the tblPr (table properties) element for this Table,
-             * null will be return if no such element exists.
-             */
+            // Get the tblPr (table properties) element for this Table,
+            // null will be return if no such element exists.
             XElement tblPr = Xml.Element(XName.Get("tblPr", DocX.w.NamespaceName));
             if (tblPr == null)
             {
@@ -2298,8 +2267,7 @@ namespace Novacode
              * Get the 'borderType' (table border) element for this Table,
              * null will be return if no such element exists.
              */
-            string tbordertype;
-            tbordertype = borderType.ToString();
+            var tbordertype = borderType.ToString();
             // only lower the first char of string (because of insideH and insideV)
             tbordertype = tbordertype.Substring(0, 1).ToLower() + tbordertype.Substring(1);
 
@@ -2394,7 +2362,7 @@ namespace Novacode
                 // If color is not a Color, something is wrong with this attributes value, so remove it
                 try
                 {
-                    b.Color = color.Value;
+                    b.Color = ColorTranslator.FromHtml(string.Format("#{0}", color.Value));
                 }
                 catch
                 {
@@ -2449,13 +2417,10 @@ namespace Novacode
                 if (trPr != null)
                 {
                     var gridAfter = trPr.Element(XName.Get("gridAfter", DocX.w.NamespaceName));
-                    if (gridAfter != null)
+                    var val = gridAfter?.Attribute(XName.Get("val", DocX.w.NamespaceName));
+                    if (val != null)
                     {
-                        var val = gridAfter.Attribute(XName.Get("val", DocX.w.NamespaceName));
-                        if (val != null)
-                        {
-                            gridAfterValue += int.Parse(val.Value);
-                        }
+                        gridAfterValue += int.Parse(val.Value);
                     }
                 }
                 return gridAfterValue;
@@ -2484,7 +2449,7 @@ namespace Novacode
             XElement table = Xml.Parent;
 
             Xml.Remove();
-            if (table.Elements(XName.Get("tr", DocX.w.NamespaceName)).Count() == 0)
+            if (!table.Elements(XName.Get("tr", DocX.w.NamespaceName)).Any())
                 table.Remove();
         }
 
@@ -2530,28 +2495,18 @@ namespace Novacode
         {
             get
             {
-                /*
-                * Get the trPr (table row properties) element for this Row,
-                * null will be return if no such element exists.
-                */
+                // Get the trPr (table row properties) element for this Row,
+                // null will be return if no such element exists.
                 XElement trPr = Xml.Element(XName.Get("trPr", DocX.w.NamespaceName));
 
                 // If trPr is null, this row contains no height information.
-                if (trPr == null)
-                    return double.NaN;
-
-                /*
-                 * Get the trHeight element for this Row,
-                 * null will be return if no such element exists.
-                 */
-                XElement trHeight = trPr.Element(XName.Get("trHeight", DocX.w.NamespaceName));
+                // Get the trHeight element for this Row,
+                // null will be return if no such element exists.
+                XElement trHeight = trPr?.Element(XName.Get("trHeight", DocX.w.NamespaceName));
 
                 // If trHeight is null, this row contains no height information.
-                if (trHeight == null)
-                    return double.NaN;
-
                 // Get the val attribute for this trHeight element.
-                XAttribute val = trHeight.Attribute(XName.Get("val", DocX.w.NamespaceName));
+                XAttribute val = trHeight?.Attribute(XName.Get("val", DocX.w.NamespaceName));
 
                 // If w is null, this cell contains no width information.
                 if (val == null)
@@ -2641,15 +2596,10 @@ namespace Novacode
             get
             {
                 XElement trPr = Xml.Element(XName.Get("trPr", DocX.w.NamespaceName));
-                XElement tblHeader = trPr.Element(XName.Get("tblHeader", DocX.w.NamespaceName));
-                if (tblHeader == null)
-                {
+                if (trPr == null)
                     return false;
-                }
-                else
-                {
-                    return true;
-                }
+                XElement tblHeader = trPr.Element(XName.Get("tblHeader", DocX.w.NamespaceName));
+                return tblHeader != null;
             }
             set
             {
@@ -2683,15 +2633,9 @@ namespace Novacode
             {
                 XElement trPr = Xml.Element(XName.Get("trPr", DocX.w.NamespaceName));
 
-                if (trPr == null)
-                    return true;
+                XElement trCantSplit = trPr?.Element(XName.Get("cantSplit", DocX.w.NamespaceName));
 
-                XElement trCantSplit = trPr.Element(XName.Get("cantSplit", DocX.w.NamespaceName));
-
-                if (trCantSplit == null)
-                    return true;
-
-                return false;
+                return trCantSplit == null;
             }
 
             set
@@ -2709,16 +2653,11 @@ namespace Novacode
                     if (trCantSplit == null)
                         trPr.SetElementValue(XName.Get("cantSplit", DocX.w.NamespaceName), string.Empty);
                 }
-
-                if (value == true)
+                else
                 {
                     XElement trPr = Xml.Element(XName.Get("trPr", DocX.w.NamespaceName));
-                    if (trPr != null)
-                    {
-                        XElement trCantSplit = trPr.Element(XName.Get("cantSplit", DocX.w.NamespaceName));
-                        if (trCantSplit != null)
-                            trCantSplit.Remove();
-                    }
+                    XElement trCantSplit = trPr?.Element(XName.Get("cantSplit", DocX.w.NamespaceName));
+                    trCantSplit?.Remove();
                 }
             }
         }
@@ -2739,18 +2678,14 @@ namespace Novacode
             foreach (Cell c in Cells.Where((z, i) => i > startIndex && i <= endIndex))
             {
                 XElement tcPr = c.Xml.Element(XName.Get("tcPr", DocX.w.NamespaceName));
-                if (tcPr != null)
+                XElement gridSpan = tcPr?.Element(XName.Get("gridSpan", DocX.w.NamespaceName));
+                if (gridSpan != null)
                 {
-                    XElement gridSpan = tcPr.Element(XName.Get("gridSpan", DocX.w.NamespaceName));
-                    if (gridSpan != null)
-                    {
-                        XAttribute val = gridSpan.Attribute(XName.Get("val", DocX.w.NamespaceName));
+                    XAttribute val = gridSpan.Attribute(XName.Get("val", DocX.w.NamespaceName));
 
-                        int value = 0;
-                        if (val != null)
-                            if (int.TryParse(val.Value, out value))
-                                gridSpanSum += value - 1;
-                    }
+                    int value;
+                    if (val != null && int.TryParse(val.Value, out value))
+                            gridSpanSum += value - 1;
                 }
 
                 // Add this cells Pragraph to the merge start Cell.
@@ -2830,18 +2765,14 @@ namespace Novacode
             {
                 var gridSpanVal = 0;
                 XElement tcPr = Xml.Element(XName.Get("tcPr", DocX.w.NamespaceName));
-                if (tcPr != null)
+                XElement gridSpan = tcPr?.Element(XName.Get("gridSpan", DocX.w.NamespaceName));
+                if (gridSpan != null)
                 {
-                    XElement gridSpan = tcPr.Element(XName.Get("gridSpan", DocX.w.NamespaceName));
-                    if (gridSpan != null)
-                    {
-                        XAttribute val = gridSpan.Attribute(XName.Get("val", DocX.w.NamespaceName));
+                    XAttribute val = gridSpan.Attribute(XName.Get("val", DocX.w.NamespaceName));
 
-                        int value = 0;
-                        if (val != null)
-                            if (int.TryParse(val.Value, out value))
-                                gridSpanVal = value;
-                    }
+                    int value;
+                    if (val != null && int.TryParse(val.Value, out value))
+                            gridSpanVal = value;
                 }
                 return gridSpanVal;
             }
@@ -2898,21 +2829,13 @@ namespace Novacode
                 XElement tcPr = Xml.Element(XName.Get("tcPr", DocX.w.NamespaceName));
 
                 // If tcPr is null, this cell contains no width information.
-                if (tcPr == null)
-                    return VerticalAlignment.Center;
-
-                /*
-                 * Get the vAlign (table cell vertical alignment) element for this Cell,
-                 * null will be return if no such element exists.
-                 */
-                XElement vAlign = tcPr.Element(XName.Get("vAlign", DocX.w.NamespaceName));
+                // Get the vAlign (table cell vertical alignment) element for this Cell,
+                // null will be return if no such element exists.
+                XElement vAlign = tcPr?.Element(XName.Get("vAlign", DocX.w.NamespaceName));
 
                 // If vAlign is null, this cell contains no vertical alignment information.
-                if (vAlign == null)
-                    return VerticalAlignment.Center;
-
                 // Get the val attribute of the vAlign element.
-                XAttribute val = vAlign.Attribute(XName.Get("val", DocX.w.NamespaceName));
+                XAttribute val = vAlign?.Attribute(XName.Get("val", DocX.w.NamespaceName));
 
                 // If val is null, this cell contains no vAlign information.
                 if (val == null)
@@ -2933,10 +2856,8 @@ namespace Novacode
 
             set
             {
-                /*
-                 * Get the tcPr (table cell properties) element for this Cell,
-                 * null will be return if no such element exists.
-                 */
+                // Get the tcPr (table cell properties) element for this Cell,
+                // null will be return if no such element exists.
                 XElement tcPr = Xml.Element(XName.Get("tcPr", DocX.w.NamespaceName));
                 if (tcPr == null)
                 {
@@ -2944,10 +2865,9 @@ namespace Novacode
                     tcPr = Xml.Element(XName.Get("tcPr", DocX.w.NamespaceName));
                 }
 
-                /*
-                 * Get the vAlign (table cell vertical alignment) element for this Cell,
-                 * null will be return if no such element exists.
-                 */
+                
+                // Get the vAlign (table cell vertical alignment) element for this Cell,
+                // null will be return if no such element exists.
                 XElement vAlign = tcPr.Element(XName.Get("vAlign", DocX.w.NamespaceName));
                 if (vAlign == null)
                 {
@@ -2960,46 +2880,34 @@ namespace Novacode
             }
         }
 
-        public string Shading
+        public Color Shading
         {
             get
             {
-                /*
-                 * Get the tcPr (table cell properties) element for this Cell,
-                 * null will be return if no such element exists.
-                 */
+                // Get the tcPr (table cell properties) element for this Cell,
+                // null will be return if no such element exists.
                 XElement tcPr = Xml.Element(XName.Get("tcPr", DocX.w.NamespaceName));
 
                 // If tcPr is null, this cell contains no Color information.
-                if (tcPr == null)
-                    return DefinedColors.White;
-
-                /*
-                 * Get the shd (table shade) element for this Cell,
-                 * null will be return if no such element exists.
-                 */
-                XElement shd = tcPr.Element(XName.Get("shd", DocX.w.NamespaceName));
+                // Get the shd (table shade) element for this Cell,
+                // null will be return if no such element exists.
+                XElement shd = tcPr?.Element(XName.Get("shd", DocX.w.NamespaceName));
 
                 // If shd is null, this cell contains no Color information.
-                if (shd == null)
-                    return DefinedColors.White;
-
                 // Get the w attribute of the tcW element.
-                XAttribute fill = shd.Attribute(XName.Get("fill", DocX.w.NamespaceName));
+                XAttribute fill = shd?.Attribute(XName.Get("fill", DocX.w.NamespaceName));
 
                 // If fill is null, this cell contains no Color information.
                 if (fill == null)
-                    return DefinedColors.White;
+                    return Color.White;
 
-                return fill.Value;
+                return ColorTranslator.FromHtml(string.Format("#{0}", fill.Value));
             }
 
             set
             {
-                /*
-                 * Get the tcPr (table cell properties) element for this Cell,
-                 * null will be return if no such element exists.
-                 */
+                // Get the tcPr (table cell properties) element for this Cell,
+                // null will be return if no such element exists.
                 XElement tcPr = Xml.Element(XName.Get("tcPr", DocX.w.NamespaceName));
                 if (tcPr == null)
                 {
@@ -3036,28 +2944,18 @@ namespace Novacode
         {
             get
             {
-                /*
-                 * Get the tcPr (table cell properties) element for this Cell,
-                 * null will be return if no such element exists.
-                 */
+                // Get the tcPr (table cell properties) element for this Cell,
+                // null will be return if no such element exists.
                 XElement tcPr = Xml.Element(XName.Get("tcPr", DocX.w.NamespaceName));
 
                 // If tcPr is null, this cell contains no width information.
-                if (tcPr == null)
-                    return double.NaN;
-
-                /*
-                 * Get the tcW (table cell width) element for this Cell,
-                 * null will be return if no such element exists.
-                 */
-                XElement tcW = tcPr.Element(XName.Get("tcW", DocX.w.NamespaceName));
+                // Get the tcW (table cell width) element for this Cell,
+                // null will be return if no such element exists.
+                XElement tcW = tcPr?.Element(XName.Get("tcW", DocX.w.NamespaceName));
 
                 // If tcW is null, this cell contains no width information.
-                if (tcW == null)
-                    return double.NaN;
-
                 // Get the w attribute of the tcW element.
-                XAttribute w = tcW.Attribute(XName.Get("w", DocX.w.NamespaceName));
+                XAttribute w = tcW?.Attribute(XName.Get("w", DocX.w.NamespaceName));
 
                 // If w is null, this cell contains no width information.
                 if (w == null)
@@ -3104,9 +3002,6 @@ namespace Novacode
                     // remove cell width; due to set on table prop.
                     tcW.Remove();
                     return;
-
-                    //tcW.SetAttributeValue(XName.Get("type", DocX.w.NamespaceName), "auto");
-                    //return;
                 }
 
                 // The type attribute needs to be set to dxa which represents "twips" or twentieths of a point. In other words, 1/1440th of an inch.
@@ -3164,18 +3059,12 @@ namespace Novacode
                 XElement tcMar = tcPr.Element(XName.Get("tcMar", DocX.w.NamespaceName));
 
                 // If tcMar is null, this cell contains no margin information.
-                if (tcMar == null)
-                    return double.NaN;
-
                 // Get the left (LeftMargin) element
-                XElement tcMarLeft = tcMar.Element(XName.Get("left", DocX.w.NamespaceName));
+                XElement tcMarLeft = tcMar?.Element(XName.Get("left", DocX.w.NamespaceName));
 
                 // If tcMarLeft is null, this cell contains no left margin information.
-                if (tcMarLeft == null)
-                    return double.NaN;
-
                 // Get the w attribute of the tcMarLeft element.
-                XAttribute w = tcMarLeft.Attribute(XName.Get("w", DocX.w.NamespaceName));
+                XAttribute w = tcMarLeft?.Attribute(XName.Get("w", DocX.w.NamespaceName));
 
                 // If w is null, this cell contains no width information.
                 if (w == null)
@@ -3283,18 +3172,12 @@ namespace Novacode
                 XElement tcMar = tcPr.Element(XName.Get("tcMar", DocX.w.NamespaceName));
 
                 // If tcMar is null, this cell contains no margin information.
-                if (tcMar == null)
-                    return double.NaN;
-
                 // Get the right (RightMargin) element
-                XElement tcMarRight = tcMar.Element(XName.Get("right", DocX.w.NamespaceName));
+                XElement tcMarRight = tcMar?.Element(XName.Get("right", DocX.w.NamespaceName));
 
                 // If tcMarRight is null, this cell contains no right margin information.
-                if (tcMarRight == null)
-                    return double.NaN;
-
                 // Get the w attribute of the tcMarRight element.
-                XAttribute w = tcMarRight.Attribute(XName.Get("w", DocX.w.NamespaceName));
+                XAttribute w = tcMarRight?.Attribute(XName.Get("w", DocX.w.NamespaceName));
 
                 // If w is null, this cell contains no width information.
                 if (w == null)
@@ -3402,18 +3285,12 @@ namespace Novacode
                 XElement tcMar = tcPr.Element(XName.Get("tcMar", DocX.w.NamespaceName));
 
                 // If tcMar is null, this cell contains no margin information.
-                if (tcMar == null)
-                    return double.NaN;
-
                 // Get the top (TopMargin) element
-                XElement tcMarTop = tcMar.Element(XName.Get("top", DocX.w.NamespaceName));
+                XElement tcMarTop = tcMar?.Element(XName.Get("top", DocX.w.NamespaceName));
 
                 // If tcMarTop is null, this cell contains no top margin information.
-                if (tcMarTop == null)
-                    return double.NaN;
-
                 // Get the w attribute of the tcMarTop element.
-                XAttribute w = tcMarTop.Attribute(XName.Get("w", DocX.w.NamespaceName));
+                XAttribute w = tcMarTop?.Attribute(XName.Get("w", DocX.w.NamespaceName));
 
                 // If w is null, this cell contains no width information.
                 if (w == null)
@@ -3511,14 +3388,12 @@ namespace Novacode
                 XElement tcPr = Xml.Element(XName.Get("tcPr", DocX.w.NamespaceName));
 
                 // If tcPr is null, this cell contains no width information.
-                if (tcPr == null)
-                    return double.NaN;
 
                 /*
                  * Get the tcMar
                  * 
                  */
-                XElement tcMar = tcPr.Element(XName.Get("tcMar", DocX.w.NamespaceName));
+                XElement tcMar = tcPr?.Element(XName.Get("tcMar", DocX.w.NamespaceName));
 
                 // If tcMar is null, this cell contains no margin information.
                 if (tcMar == null)
@@ -3528,11 +3403,9 @@ namespace Novacode
                 XElement tcMarBottom = tcMar.Element(XName.Get("bottom", DocX.w.NamespaceName));
 
                 // If tcMarBottom is null, this cell contains no bottom margin information.
-                if (tcMarBottom == null)
-                    return double.NaN;
 
                 // Get the w attribute of the tcMarBottom element.
-                XAttribute w = tcMarBottom.Attribute(XName.Get("w", DocX.w.NamespaceName));
+                XAttribute w = tcMarBottom?.Attribute(XName.Get("w", DocX.w.NamespaceName));
 
                 // If w is null, this cell contains no width information.
                 if (w == null)
@@ -3705,7 +3578,7 @@ namespace Novacode
             tcBorderType.SetAttributeValue(XName.Get("space", DocX.w.NamespaceName), (border.Space).ToString());
 
             // The color attribute is used for the border color
-            tcBorderType.SetAttributeValue(XName.Get("color", DocX.w.NamespaceName), border.Color);
+            tcBorderType.SetAttributeValue(XName.Get("color", DocX.w.NamespaceName), border.Color.ToHex());
         }
 
 
@@ -3717,7 +3590,7 @@ namespace Novacode
         public Border GetBorder(TableCellBorderType borderType)
         {
             // instance with default border values
-            Border b = new Border();
+            var b = new Border();
 
             /*
              * Get the tcPr (table cell properties) element for this Cell,
@@ -3743,8 +3616,7 @@ namespace Novacode
              * Get the 'borderType' (cell border) element for this Cell,
              * null will be return if no such element exists.
              */
-            string tcbordertype;
-            tcbordertype = borderType.ToString();
+            var tcbordertype = borderType.ToString();
 
             switch (tcbordertype)
             {
@@ -3852,7 +3724,7 @@ namespace Novacode
                 // If color is not a Color, something is wrong with this attributes value, so remove it
                 try
                 {
-                    b.Color = color.Value;
+                    b.Color = ColorTranslator.FromHtml(string.Format("#{0}", color.Value));
                 }
                 catch
                 {
@@ -3886,7 +3758,7 @@ namespace Novacode
         /// }
         /// </code>
         /// </example>
-        public string FillColor
+        public Color FillColor
         {
             get
             {
@@ -3895,24 +3767,12 @@ namespace Novacode
                  * null will be return if no such element exists.
                  */
                 XElement tcPr = Xml.Element(XName.Get("tcPr", DocX.w.NamespaceName));
-                if (tcPr == null)
-                    return DefinedColors.Empty;
-                else
-                {
-                    XElement shd = tcPr.Element(XName.Get("shd", DocX.w.NamespaceName));
-                    if (shd == null)
-                        return DefinedColors.Empty;
-                    else
-                    {
-                        XAttribute fill = shd.Attribute(XName.Get("fill", DocX.w.NamespaceName));
-                        if (fill == null)
-                            return DefinedColors.Empty;
-                        else
-                        {
-                            return fill.Value.Replace("#", "");
-                        }
-                    }
-                }
+                XElement shd = tcPr?.Element(XName.Get("shd", DocX.w.NamespaceName));
+                XAttribute fill = shd?.Attribute(XName.Get("fill", DocX.w.NamespaceName));
+                if (fill == null)
+                    return Color.Empty;
+                int argb = Int32.Parse(fill.Value.Replace("#", ""), NumberStyles.HexNumber);
+                return Color.FromArgb(argb);
             }
 
             set
@@ -3961,12 +3821,8 @@ namespace Novacode
                 XElement tcPr = Xml.Element(XName.Get("tcPr", DocX.w.NamespaceName));
 
                 // If tcPr is null, this cell contains no width information.
-                if (tcPr == null)
-                    return TextDirection.right;
-                XElement textDirection = tcPr.Element(XName.Get("textDirection", DocX.w.NamespaceName));
-                if (textDirection == null)
-                    return TextDirection.right;
-                XAttribute val = textDirection.Attribute(XName.Get("val", DocX.w.NamespaceName));
+                XElement textDirection = tcPr?.Element(XName.Get("textDirection", DocX.w.NamespaceName));
+                XAttribute val = textDirection?.Attribute(XName.Get("val", DocX.w.NamespaceName));
                 if (val == null)
                     return TextDirection.right;
 
@@ -3975,7 +3831,6 @@ namespace Novacode
                 {
                     return (TextDirection)Enum.Parse(typeof(TextDirection), val.Value, true);
                 }
-
                 catch
                 {
                     val.Remove();

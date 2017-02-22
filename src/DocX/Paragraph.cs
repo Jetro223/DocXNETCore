@@ -1,13 +1,14 @@
 ﻿using System;
-using System.IO;
 using System.Linq;
+using System.Drawing;
 using System.Xml.Linq;
 using System.Collections;
 using System.IO.Packaging;
 using System.Globalization;
+using System.Security.Principal;
 using System.Collections.Generic;
+using System.IO;
 using System.Text.RegularExpressions;
-using Novacode.NETCorePort;
 
 
 namespace Novacode
@@ -254,13 +255,10 @@ namespace Novacode
             {
                 var element = this.GetOrCreate_pPr();
                 var styleElement = element.Element(XName.Get("pStyle", DocX.w.NamespaceName));
-                if (styleElement != null)
+                var attr = styleElement?.Attribute(XName.Get("val", DocX.w.NamespaceName));
+                if (!string.IsNullOrEmpty(attr?.Value))
                 {
-                    var attr = styleElement.Attribute(XName.Get("val", DocX.w.NamespaceName));
-                    if (attr != null && !string.IsNullOrEmpty(attr.Value))
-                    {
-                        return attr.Value;
-                    }
+                    return attr.Value;
                 }
                 return "Normal";
             }
@@ -408,11 +406,7 @@ namespace Novacode
                 XElement pPr = GetOrCreate_pPr();
                 XElement bidi = pPr.Element(XName.Get("bidi", DocX.w.NamespaceName));
 
-                if (bidi == null)
-                    return Direction.LeftToRight;
-
-                else
-                    return Direction.RightToLeft;
+                return bidi == null ? Direction.LeftToRight : Direction.RightToLeft;
             }
 
             set
@@ -427,11 +421,9 @@ namespace Novacode
                     if (bidi == null)
                         pPr.Add(new XElement(XName.Get("bidi", DocX.w.NamespaceName)));
                 }
-
                 else
                 {
-                    if (bidi != null)
-                        bidi.Remove();
+                    bidi?.Remove();
                 }
             }
         }
@@ -514,9 +506,9 @@ namespace Novacode
             {
                 pPr.Add(new XElement(XName.Get("keepLines", DocX.w.NamespaceName)));
             }
-            if (!keepTogether && keepLinesE != null)
+            if (!keepTogether)
             {
-                keepLinesE.Remove();
+                keepLinesE?.Remove();
             }
             return this;
         }
@@ -586,7 +578,7 @@ namespace Novacode
         {
             get
             {
-                XElement pPr = GetOrCreate_pPr();
+                GetOrCreate_pPr();
                 XElement ind = GetOrCreate_pPr_ind();
                 XAttribute firstLine = ind.Attribute(XName.Get("firstLine", DocX.w.NamespaceName));
 
@@ -607,8 +599,7 @@ namespace Novacode
 
                     // Paragraph can either be firstLine or hanging (Remove hanging).
                     XAttribute hanging = ind.Attribute(XName.Get("hanging", DocX.w.NamespaceName));
-                    if (hanging != null)
-                        hanging.Remove();
+                    hanging?.Remove();
 
                     string indentation = ((indentationFirstLine / 0.1) * 57).ToString();
                     XAttribute firstLine = ind.Attribute(XName.Get("firstLine", DocX.w.NamespaceName));
@@ -645,7 +636,7 @@ namespace Novacode
         {
             get
             {
-                XElement pPr = GetOrCreate_pPr();
+                GetOrCreate_pPr();
                 XElement ind = GetOrCreate_pPr_ind();
                 XAttribute hanging = ind.Attribute(XName.Get("hanging", DocX.w.NamespaceName));
 
@@ -723,7 +714,7 @@ namespace Novacode
                     XElement pPr = GetOrCreate_pPr();
                     XElement ind = GetOrCreate_pPr_ind();
 
-                    string indentation = ((indentationBefore / 0.1) * 57).ToString();
+                    string indentation = ((indentationBefore / 0.1) * 57).ToString(CultureInfo.CurrentCulture);
 
                     XAttribute left = ind.Attribute(XName.Get("left", DocX.w.NamespaceName));
                     if (left != null)
@@ -734,7 +725,7 @@ namespace Novacode
             }
         }
 
-        private float indentationAfter = 0.0f;
+        private float indentationAfter;
         /// <summary>
         /// Set the after indentation in cm for this Paragraph.
         /// </summary>
@@ -762,7 +753,7 @@ namespace Novacode
         {
             get
             {
-                XElement pPr = GetOrCreate_pPr();
+                GetOrCreate_pPr();
                 XElement ind = GetOrCreate_pPr_ind();
 
                 XAttribute right = ind.Attribute(XName.Get("right", DocX.w.NamespaceName));
@@ -1668,34 +1659,19 @@ namespace Novacode
         /// <param name="descr">The description of this Picture.</param>
         static internal Picture CreatePicture(DocX document, string id, string name, string descr)
         {
-
-#if NETSTANDARD1_6
-            throw new NotSupportedException("Not supported in .NET Core");
-#else
             PackagePart part = document.package.GetPart(document.mainPart.GetRelationship(id).TargetUri);
 
-            int newDocPrId = 1;
-            List<string> existingIds = new List<string>();
-            foreach (var bookmarkId in document.Xml.Descendants(XName.Get("bookmarkStart", DocX.w.NamespaceName)))
-            {
-                var idAtt = bookmarkId.Attributes().FirstOrDefault(x => x.Name.LocalName == "id");
-                if (idAtt != null)
-                    existingIds.Add(idAtt.Value);
-            }
-
-            while (existingIds.Contains(newDocPrId.ToString()))
-                newDocPrId++;
-
-
+            long newDocPrId = document.GetNextFreeDocPrId();
             int cx, cy;
 
-            using (System.Drawing.Image img = System.Drawing.Image.FromStream(new PackagePartStream(part.GetStream())))
+            using (PackagePartStream packagePartStream = new PackagePartStream(part.GetStream()))
             {
-                cx = img.Width * 9526;
-                cy = img.Height * 9526;
+                using (System.Drawing.Image img = System.Drawing.Image.FromStream(packagePartStream, useEmbeddedColorManagement: false, validateImageData: false))
+                {
+                    cx = img.Width*9526;
+                    cy = img.Height*9526;
+                }
             }
-
-            XElement e = new XElement(DocX.w + "drawing");
 
             XElement xml = XElement.Parse
                  (string.Format(@"<w:r xmlns:w=""http://schemas.openxmlformats.org/wordprocessingml/2006/main"">
@@ -1737,7 +1713,6 @@ namespace Novacode
                     ", cx, cy, id, name, descr, newDocPrId.ToString()));
 
             return new Picture(document, xml, new Image(document, document.mainPart.GetRelationship(id)));
-#endif
         }
 
         // Removed because it confusses the API.
@@ -1777,7 +1752,7 @@ namespace Novacode
             (
                 new XElement(DocX.w + t.ToString(),
                     new XAttribute(DocX.w + "id", 0),
-                    new XAttribute(DocX.w + "author", "DocX .NET Core"),
+                    new XAttribute(DocX.w + "author", WindowsIdentity.GetCurrent().Name),
                     new XAttribute(DocX.w + "date", edit_time),
                 content)
             );
@@ -1927,7 +1902,7 @@ namespace Novacode
         /// </code>
         /// </example>
         /// <seealso cref="Paragraph.RemoveText(int, bool)"/>
-        /// <seealso cref="Paragraph.RemoveText(int, int, bool)"/>
+        /// <seealso cref="Paragraph.RemoveText(int, int, bool, bool)"/>
         /// <param name="value">The System.String to insert.</param>
         /// <param name="trackChanges">Flag this insert as a change.</param>
         /// <param name="formatting">The text formatting.</param>
@@ -1992,7 +1967,7 @@ namespace Novacode
         /// </code>
         /// </example>
         /// <seealso cref="Paragraph.RemoveText(int, bool)"/>
-        /// <seealso cref="Paragraph.RemoveText(int, int, bool)"/>
+        /// <seealso cref="Paragraph.RemoveText(int, int, bool, bool)"/>
         /// <param name="index">The index position of the insertion.</param>
         /// <param name="value">The System.String to insert.</param>
         /// <param name="trackChanges">Flag this insert as a change.</param>
@@ -2039,7 +2014,7 @@ namespace Novacode
                         finfmt = oldfmt.Clone();
                         if (formatting.Bold.HasValue) { finfmt.Bold = formatting.Bold; }
                         if (formatting.CapsStyle.HasValue) { finfmt.CapsStyle = formatting.CapsStyle; }
-                        if (formatting.FontColor.HasValue()) { finfmt.FontColor = formatting.FontColor; }
+                        if (formatting.FontColor.HasValue) { finfmt.FontColor = formatting.FontColor; }
                         finfmt.FontFamily = formatting.FontFamily;
                         if (formatting.Hidden.HasValue) { finfmt.Hidden = formatting.Hidden; }
                         if (formatting.Highlight.HasValue) { finfmt.Highlight = formatting.Highlight; }
@@ -2053,7 +2028,7 @@ namespace Novacode
                         if (formatting.Size.HasValue) { finfmt.Size = formatting.Size; }
                         if (formatting.Spacing.HasValue) { finfmt.Spacing = formatting.Spacing; }
                         if (formatting.StrikeThrough.HasValue) { finfmt.StrikeThrough = formatting.StrikeThrough; }
-                        if (formatting.UnderlineColor.HasValue()) { finfmt.UnderlineColor = formatting.UnderlineColor; }
+                        if (formatting.UnderlineColor.HasValue) { finfmt.UnderlineColor = formatting.UnderlineColor; }
                         if (formatting.UnderlineStyle.HasValue) { finfmt.UnderlineStyle = formatting.UnderlineStyle; }
                     }
                     else
@@ -2497,21 +2472,24 @@ namespace Novacode
             string image_uri_string = p.img.pr.TargetUri.OriginalString;
 
             // Search for a relationship with a TargetUri that points at this Image.
-            var Id =
-            (
-                from r in mainPart.GetRelationshipsByType("http://schemas.openxmlformats.org/officeDocument/2006/relationships/image")
-                where r.TargetUri.OriginalString == image_uri_string
-                select r.Id
-            ).SingleOrDefault();
+            string id = null;
+            foreach (var r in mainPart.GetRelationshipsByType(DocX.relationshipImage))
+            {
+                if (string.Equals(r.TargetUri.OriginalString, image_uri_string, StringComparison.Ordinal))
+                {
+                    id = r.Id;
+                    break;
+                }
+            }
 
-            // If such a relation dosen't exist, create one.
-            if (Id == null)
+            // If such a relation doesn't exist, create one.
+            if (id == null)
             {
                 // Check to see if a relationship for this Picture exists and create it if not.
-                PackageRelationship pr = mainPart.CreateRelationship(p.img.pr.TargetUri, TargetMode.Internal, "http://schemas.openxmlformats.org/officeDocument/2006/relationships/image");
-                Id = pr.Id;
+                PackageRelationship pr = mainPart.CreateRelationship(p.img.pr.TargetUri, TargetMode.Internal, DocX.relationshipImage);
+                id = pr.Id;
             }
-            return Id;
+            return id;
         }
 
         internal string GetOrGenerateRel(Hyperlink h)
@@ -2884,9 +2862,9 @@ namespace Novacode
         /// }// Release this document from memory.
         /// </code>
         /// </example>
-        public Paragraph Color(string c)
+        public Paragraph Color(Color c)
         {
-            ApplyTextFormattingProperty(XName.Get("color", DocX.w.NamespaceName), string.Empty, new XAttribute(XName.Get("val", DocX.w.NamespaceName), c));
+            ApplyTextFormattingProperty(XName.Get("color", DocX.w.NamespaceName), string.Empty, new XAttribute(XName.Get("val", DocX.w.NamespaceName), c.ToHex()));
             return this;
         }
 
@@ -3275,7 +3253,7 @@ namespace Novacode
         /// }// Release this document from memory.
         /// </code>
         /// </example>
-        public Paragraph UnderlineColor(string underlineColor)
+        public Paragraph UnderlineColor(Color underlineColor)
         {
             foreach (XElement run in runs)
             {
@@ -3675,32 +3653,33 @@ namespace Novacode
             return new DocProperty(Document, xml);
         }
 
-        /// <summary>
-        /// Removes characters from a Novacode.DocX.Paragraph.
-        /// </summary>
-        /// <example>
-        /// <code>
-        /// // Create a document using a relative filename.
-        /// using (DocX document = DocX.Load(@"C:\Example\Test.docx"))
-        /// {
-        ///     // Iterate through the paragraphs
-        ///     foreach (Paragraph p in document.Paragraphs)
-        ///     {
-        ///         // Remove the first two characters from every paragraph
-        ///         p.RemoveText(0, 2, false);
-        ///     }
-        ///        
-        ///     // Save all changes made to this document.
-        ///     document.Save();
-        /// }// Release this document from memory.
-        /// </code>
-        /// </example>
-        /// <seealso cref="Paragraph.InsertText(int, string, bool, Formatting)"/>
-        /// <seealso cref="Paragraph.InsertText(string, bool, Formatting)"/>
-        /// <param name="index">The position to begin deleting characters.</param>
-        /// <param name="count">The number of characters to delete</param>
-        /// <param name="trackChanges">Track changes</param>
-        public void RemoveText(int index, int count, bool trackChanges = false)
+		/// <summary>
+		/// Removes characters from a Novacode.DocX.Paragraph.
+		/// </summary>
+		/// <example>
+		/// <code>
+		/// // Create a document using a relative filename.
+		/// using (DocX document = DocX.Load(@"C:\Example\Test.docx"))
+		/// {
+		///     // Iterate through the paragraphs
+		///     foreach (Paragraph p in document.Paragraphs)
+		///     {
+		///         // Remove the first two characters from every paragraph
+		///         p.RemoveText(0, 2, false);
+		///     }
+		///        
+		///     // Save all changes made to this document.
+		///     document.Save();
+		/// }// Release this document from memory.
+		/// </code>
+		/// </example>
+		/// <seealso cref="Paragraph.InsertText(int, string, bool, Formatting)"/>
+		/// <seealso cref="Paragraph.InsertText(string, bool, Formatting)"/>
+		/// <param name="index">The position to begin deleting characters.</param>
+		/// <param name="count">The number of characters to delete</param>
+		/// <param name="trackChanges">Track changes</param>
+		/// <param name="removeEmptyParagraph">Remove empty paragraph</param>
+		public void RemoveText(int index, int count, bool trackChanges = false, bool removeEmptyParagraph=true)
         {
             // Timestamp to mark the start of insert
             DateTime now = DateTime.Now;
@@ -3781,7 +3760,7 @@ namespace Novacode
                 }
 
                 // If after this remove the parent element is empty, remove it.
-                if (GetElementTextLength(parentElement) == 0)
+                if (removeEmptyParagraph && GetElementTextLength(parentElement) == 0)
                 {
                     if (parentElement.Parent != null && parentElement.Parent.Name.LocalName != "tc")
                     {
@@ -3827,59 +3806,60 @@ namespace Novacode
             RemoveText(index, Text.Length - index, trackChanges);
         }
 
-        /// <summary>
-        /// Replaces all occurrences of a specified System.String in this instance, with another specified System.String.
-        /// </summary>
-        /// <example>
-        /// <code>
-        /// // Load a document using a relative filename.
-        /// using (DocX document = DocX.Load(@"C:\Example\Test.docx"))
-        /// {
-        ///     // The formatting to match.
-        ///     Formatting matchFormatting = new Formatting();
-        ///     matchFormatting.Size = 10;
-        ///     matchFormatting.Italic = true;
-        ///     matchFormatting.FontFamily = new FontFamily("Times New Roman");
-        ///
-        ///     // The formatting to apply to the inserted text.
-        ///     Formatting newFormatting = new Formatting();
-        ///     newFormatting.Size = 22;
-        ///     newFormatting.UnderlineStyle = UnderlineStyle.dotted;
-        ///     newFormatting.Bold = true;
-        ///
-        ///     // Iterate through the paragraphs in this document.
-        ///     foreach (Paragraph p in document.Paragraphs)
-        ///     {
-        ///         /* 
-        ///          * Replace all instances of the string "wrong" with the string "right" and ignore case.
-        ///          * Each inserted instance of "wrong" should use the Formatting newFormatting.
-        ///          * Only replace an instance of "wrong" if it is Size 10, Italic and Times New Roman.
-        ///          * SubsetMatch means that the formatting must contain all elements of the match formatting,
-        ///          * but it can also contain additional formatting for example Color, UnderlineStyle, etc.
-        ///          * ExactMatch means it must not contain additional formatting.
-        ///          */
-        ///         p.ReplaceText("wrong", "right", false, RegexOptions.IgnoreCase, newFormatting, matchFormatting, MatchFormattingOptions.SubsetMatch);
-        ///     }
-        ///
-        ///     // Save all changes made to this document.
-        ///     document.Save();
-        /// }// Release this document from memory.
-        /// </code>
-        /// </example>
-        /// <seealso cref="Paragraph.RemoveText(int, int, bool)"/>
-        /// <seealso cref="Paragraph.RemoveText(int, bool)"/>
-        /// <seealso cref="Paragraph.InsertText(int, string, bool, Formatting)"/>
-        /// <seealso cref="Paragraph.InsertText(string, bool, Formatting)"/>
-        /// <param name="newValue">A System.String to replace all occurrences of oldValue.</param>
-        /// <param name="oldValue">A System.String to be replaced.</param>
-        /// <param name="options">A bitwise OR combination of RegexOption enumeration options.</param>
-        /// <param name="trackChanges">Track changes</param>
-        /// <param name="newFormatting">The formatting to apply to the text being inserted.</param>
-        /// <param name="matchFormatting">The formatting that the text must match in order to be replaced.</param>
-        /// <param name="fo">How should formatting be matched?</param>
-        /// <param name="escapeRegEx">True if the oldValue needs to be escaped, otherwise false. If it represents a valid RegEx pattern this should be false.</param>
-        /// <param name="useRegExSubstitutions">True if RegEx-like replace should be performed, i.e. if newValue contains RegEx substitutions. Does not perform named-group substitutions (only numbered groups).</param>
-        public void ReplaceText(string oldValue, string newValue, bool trackChanges = false, RegexOptions options = RegexOptions.None, Formatting newFormatting = null, Formatting matchFormatting = null, MatchFormattingOptions fo = MatchFormattingOptions.SubsetMatch, bool escapeRegEx = true, bool useRegExSubstitutions = false)
+		/// <summary>
+		/// Replaces all occurrences of a specified System.String in this instance, with another specified System.String.
+		/// </summary>
+		/// <example>
+		/// <code>
+		/// // Load a document using a relative filename.
+		/// using (DocX document = DocX.Load(@"C:\Example\Test.docx"))
+		/// {
+		///     // The formatting to match.
+		///     Formatting matchFormatting = new Formatting();
+		///     matchFormatting.Size = 10;
+		///     matchFormatting.Italic = true;
+		///     matchFormatting.FontFamily = new FontFamily("Times New Roman");
+		///
+		///     // The formatting to apply to the inserted text.
+		///     Formatting newFormatting = new Formatting();
+		///     newFormatting.Size = 22;
+		///     newFormatting.UnderlineStyle = UnderlineStyle.dotted;
+		///     newFormatting.Bold = true;
+		///
+		///     // Iterate through the paragraphs in this document.
+		///     foreach (Paragraph p in document.Paragraphs)
+		///     {
+		///         /* 
+		///          * Replace all instances of the string "wrong" with the string "right" and ignore case.
+		///          * Each inserted instance of "wrong" should use the Formatting newFormatting.
+		///          * Only replace an instance of "wrong" if it is Size 10, Italic and Times New Roman.
+		///          * SubsetMatch means that the formatting must contain all elements of the match formatting,
+		///          * but it can also contain additional formatting for example Color, UnderlineStyle, etc.
+		///          * ExactMatch means it must not contain additional formatting.
+		///          */
+		///         p.ReplaceText("wrong", "right", false, RegexOptions.IgnoreCase, newFormatting, matchFormatting, MatchFormattingOptions.SubsetMatch);
+		///     }
+		///
+		///     // Save all changes made to this document.
+		///     document.Save();
+		/// }// Release this document from memory.
+		/// </code>
+		/// </example>
+		/// <seealso cref="Paragraph.RemoveText(int, int, bool, bool)"/>
+		/// <seealso cref="Paragraph.RemoveText(int, bool)"/>
+		/// <seealso cref="Paragraph.InsertText(int, string, bool, Formatting)"/>
+		/// <seealso cref="Paragraph.InsertText(string, bool, Formatting)"/>
+		/// <param name="newValue">A System.String to replace all occurrences of oldValue.</param>
+		/// <param name="oldValue">A System.String to be replaced.</param>
+		/// <param name="options">A bitwise OR combination of RegexOption enumeration options.</param>
+		/// <param name="trackChanges">Track changes</param>
+		/// <param name="newFormatting">The formatting to apply to the text being inserted.</param>
+		/// <param name="matchFormatting">The formatting that the text must match in order to be replaced.</param>
+		/// <param name="fo">How should formatting be matched?</param>
+		/// <param name="escapeRegEx">True if the oldValue needs to be escaped, otherwise false. If it represents a valid RegEx pattern this should be false.</param>
+		/// <param name="useRegExSubstitutions">True if RegEx-like replace should be performed, i.e. if newValue contains RegEx substitutions. Does not perform named-group substitutions (only numbered groups).</param>
+		/// <param name="removeEmptyParagraph">Remove empty paragraph</param>
+		public void ReplaceText(string oldValue, string newValue, bool trackChanges = false, RegexOptions options = RegexOptions.None, Formatting newFormatting = null, Formatting matchFormatting = null, MatchFormattingOptions fo = MatchFormattingOptions.SubsetMatch, bool escapeRegEx = true, bool useRegExSubstitutions = false, bool removeEmptyParagraph = true)
         {
             string tText = Text;
             MatchCollection mc = Regex.Matches(tText, escapeRegEx ? Regex.Escape(oldValue) : oldValue, options);
@@ -3959,22 +3939,23 @@ namespace Novacode
                     if (!String.IsNullOrEmpty(repl))
                         InsertText(m.Index + m.Length, repl, trackChanges, newFormatting);
                     if (m.Length > 0)
-                        RemoveText(m.Index, m.Length, trackChanges);
+                        RemoveText(m.Index, m.Length, trackChanges, removeEmptyParagraph);
                 }
             }
         }
 
-        /// <summary>
-        /// Find pattern regex must return a group match.
-        /// </summary>
-        /// <param name="findPattern">Regex pattern that must include one group match. ie (.*)</param>
-        /// <param name="regexMatchHandler">A func that accepts the matching find grouping text and returns a replacement value</param>
-        /// <param name="trackChanges"></param>
-        /// <param name="options"></param>
-        /// <param name="newFormatting"></param>
-        /// <param name="matchFormatting"></param>
-        /// <param name="fo"></param>
-        public void ReplaceText(string findPattern, Func<string, string> regexMatchHandler, bool trackChanges = false, RegexOptions options = RegexOptions.None, Formatting newFormatting = null, Formatting matchFormatting = null, MatchFormattingOptions fo = MatchFormattingOptions.SubsetMatch)
+		/// <summary>
+		/// Find pattern regex must return a group match.
+		/// </summary>
+		/// <param name="findPattern">Regex pattern that must include one group match. ie (.*)</param>
+		/// <param name="regexMatchHandler">A func that accepts the matching find grouping text and returns a replacement value</param>
+		/// <param name="trackChanges"></param>
+		/// <param name="options"></param>
+		/// <param name="newFormatting"></param>
+		/// <param name="matchFormatting"></param>
+		/// <param name="fo"></param>
+		/// <param name="removeEmptyParagraph">Remove empty paragraph</param>
+		public void ReplaceText(string findPattern, Func<string, string> regexMatchHandler, bool trackChanges = false, RegexOptions options = RegexOptions.None, Formatting newFormatting = null, Formatting matchFormatting = null, MatchFormattingOptions fo = MatchFormattingOptions.SubsetMatch, bool removeEmptyParagraph = true)
         {
             var matchCollection = Regex.Matches(Text, findPattern, options);
 
@@ -4022,7 +4003,7 @@ namespace Novacode
                 {
                     var newValue = regexMatchHandler.Invoke(match.Groups[1].Value);
                     InsertText(match.Index + match.Value.Length, newValue, trackChanges, newFormatting);
-                    RemoveText(match.Index, match.Value.Length, trackChanges);
+                    RemoveText(match.Index, match.Value.Length, trackChanges, removeEmptyParagraph);
                 }
             }
         }

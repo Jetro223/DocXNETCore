@@ -1,9 +1,10 @@
-﻿{
+{
   "version": "1.0.0-*",
 
   "dependencies": {
     "Microsoft.Extensions.DependencyModel": "1.1.0-preview1-001100",
-    "NETStandard.Library": "1.6.0"
+    "NETStandard.Library": "1.6.0",
+    "NuGet.CommandLine": "3.5.0"
   },
 
   "frameworks": {

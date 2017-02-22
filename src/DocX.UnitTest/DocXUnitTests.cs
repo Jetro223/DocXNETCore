@@ -8,6 +8,7 @@ using System.Xml;
 using System.Xml.Linq;
 using Novacode;
 using NUnit.Framework;
+using System.Drawing;
 using DocXFormatting = Novacode.Formatting;
 
 namespace UnitTests
@@ -20,7 +21,7 @@ namespace UnitTests
     {
         private readonly string _directoryDocuments;
         private readonly string _directoryWithFiles;
-        private static Border BlankBorder = new Border(BorderStyle.Tcbs_none, 0, 0, "ffffff");
+        private static Border BlankBorder = new Border(BorderStyle.Tcbs_none, 0, 0, Color.White);
 
         const string package_part_document = "/word/document.xml";
 
@@ -1056,9 +1057,9 @@ namespace UnitTests
             {
                 // Removing red text highlighted with yellow
                 var formatting = new DocXFormatting();
-                formatting.FontColor = "eaeaea";
+                formatting.FontColor = Color.Blue;
                 // IMPORTANT: default constructor of Formatting sets up language property - set it to NULL to be language independent
-                var desiredFormat = new DocXFormatting() { Language = null, FontColor = "ff0000", Highlight = Highlight.yellow };
+                var desiredFormat = new DocXFormatting() { Language = null, FontColor = Color.FromArgb(255, 0, 0), Highlight = Highlight.yellow };
                 var replaced = string.Empty;
                 foreach (var p in document.Paragraphs)
                 {
@@ -1072,7 +1073,7 @@ namespace UnitTests
                 Assert.AreEqual("New text highlighted with yellow", replaced);
 
                 // Removing red text with no other formatting (ExactMatch)
-                desiredFormat = new DocXFormatting() { Language = null, FontColor = "ffffff" };
+                desiredFormat = new DocXFormatting() { Language = null, FontColor = Color.FromArgb(255, 0, 0) };
                 var count = 0;
 
                 foreach (var p in document.Paragraphs)
@@ -1088,7 +1089,7 @@ namespace UnitTests
                 Assert.AreEqual(1, count);
 
                 // Removing just red text with any other formatting (SubsetMatch)
-                desiredFormat = new DocXFormatting() { Language = null, FontColor = "ffffff" };
+                desiredFormat = new DocXFormatting() { Language = null, FontColor = Color.FromArgb(255, 0, 0) };
                 count = 0;
                 foreach (var p in document.Paragraphs)
                 {
@@ -1221,7 +1222,7 @@ namespace UnitTests
             using (DocX document = DocX.Load(Path.Combine(_directoryWithFiles, "VariousTextFormatting.docx")))
             {
                 var formatting = new DocXFormatting();
-                formatting.FontColor = "357ebd";
+                formatting.FontColor = Color.Blue;
                 // IMPORTANT: default constructor of Formatting sets up language property - set it to NULL to be language independent
                 formatting.Language = null;
                 var deletedCount = document.RemoveTextInGivenFormat(formatting);
@@ -1230,10 +1231,10 @@ namespace UnitTests
                 deletedCount = document.RemoveTextInGivenFormat(new DocXFormatting() { Highlight = Highlight.yellow, Language = null });
                 Assert.AreEqual(2, deletedCount);
 
-                deletedCount = document.RemoveTextInGivenFormat(new DocXFormatting() { Highlight = Highlight.blue, Language = null, FontColor = "357ebd" });
+                deletedCount = document.RemoveTextInGivenFormat(new DocXFormatting() { Highlight = Highlight.blue, Language = null, FontColor = Color.FromArgb(0, 255, 0) });
                 Assert.AreEqual(1, deletedCount);
 
-                deletedCount = document.RemoveTextInGivenFormat(new DocXFormatting() { Language = null, FontColor = "357ebd" }, MatchFormattingOptions.ExactMatch);
+                deletedCount = document.RemoveTextInGivenFormat(new DocXFormatting() { Language = null, FontColor = Color.FromArgb(123, 123, 123) }, MatchFormattingOptions.ExactMatch);
                 Assert.AreEqual(2, deletedCount);
             }
         }
@@ -2242,7 +2243,7 @@ namespace UnitTests
             {
                 Paragraph p = document.InsertParagraph();
 
-                var fontFamily = new Font("Symbol");
+                var fontFamily = new Novacode.Font("Symbol");
 
                 p.Append("Hello World").Font(fontFamily);
 

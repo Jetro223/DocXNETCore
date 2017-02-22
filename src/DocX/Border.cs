@@ -1,4 +1,4 @@
-﻿using Novacode.NETCorePort;
+﻿using System.Drawing;
 
 namespace Novacode
 {
@@ -11,16 +11,16 @@ namespace Novacode
         public BorderStyle Tcbs { get; set; }
         public BorderSize Size { get; set; }
         public int Space { get; set; }
-        public string Color { get; set; }
+        public Color Color { get; set; }
         public Border()
         {
             this.Tcbs = BorderStyle.Tcbs_single;
             this.Size = BorderSize.one;
             this.Space = 0;
-            this.Color = DefinedColors.Black;
+            this.Color = Color.Black;
         }
 
-        public Border(BorderStyle tcbs, BorderSize size, int space, string color)
+        public Border(BorderStyle tcbs, BorderSize size, int space, Color color)
         {
             this.Tcbs = tcbs;
             this.Size = size;

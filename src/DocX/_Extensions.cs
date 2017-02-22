@@ -1,18 +1,31 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.ComponentModel;
-using System.IO;
-using System.Reflection;
-using System.Text;
+using System.Drawing;
 using System.Xml.Linq;
 
 namespace Novacode
 {
     internal static class Extensions
     {
-        internal static string ToHex(this string source)
+        internal static string ToHex(this Color source)
         {
-            return source;
+            byte red = source.R;
+            byte green = source.G;
+            byte blue = source.B;
+
+            string redHex = red.ToString("X");
+            if (redHex.Length < 2)
+                redHex = "0" + redHex;
+
+            string blueHex = blue.ToString("X");
+            if (blueHex.Length < 2)
+                blueHex = "0" + blueHex;
+
+            string greenHex = green.ToString("X");
+            if (greenHex.Length < 2)
+                greenHex = "0" + greenHex;
+
+            return string.Format("{0}{1}{2}", redHex, greenHex, blueHex);
         }
 
         public static void Flatten(this XElement e, XName name, List<XElement> flat)
@@ -66,7 +79,6 @@ namespace Novacode
         {
             XNamespace ab = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
             var tempElement = document.PageLayout.Xml.Descendants(ab + "pgMar");
-            var e = tempElement.GetEnumerator();
 
             foreach (var item in tempElement)
             {

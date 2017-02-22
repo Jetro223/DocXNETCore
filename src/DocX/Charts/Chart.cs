@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
 using System.Collections;
-using Novacode.NETCorePort;
+using System.Drawing;
 using System.Reflection;
 
 namespace Novacode
@@ -263,19 +263,17 @@ namespace Novacode
         /// </summary>
         internal XElement Xml { get; private set; }
 
-        public string Color
+        public Color Color
         {
             get
             {
                 XElement colorElement = Xml.Element(XName.Get("spPr", DocX.c.NamespaceName));
                 if (colorElement == null)
-                    return DefinedColors.Transparent;
+                    return Color.Transparent;
                 else
-                    return
-                        colorElement.Element(XName.Get("solidFill", DocX.a.NamespaceName))
-                            .Element(XName.Get("srgbClr", DocX.a.NamespaceName))
-                            .Attribute(XName.Get("val"))
-                            .Value;
+                    return Color.FromArgb(Int32.Parse(
+                        colorElement.Element(XName.Get("solidFill", DocX.a.NamespaceName)).Element(XName.Get("srgbClr", DocX.a.NamespaceName)).Attribute(XName.Get("val")).Value,
+                        System.Globalization.NumberStyles.HexNumber));
             }
             set
             {
@@ -288,7 +286,7 @@ namespace Novacode
                         XName.Get("solidFill", DocX.a.NamespaceName),
                         new XElement(
                             XName.Get("srgbClr", DocX.a.NamespaceName),
-                            new XAttribute(XName.Get("val"), value))));
+                            new XAttribute(XName.Get("val"), value.ToHex()))));
                 Xml.Element(XName.Get("tx", DocX.c.NamespaceName)).AddAfterSelf(colorElement);
             }
         }

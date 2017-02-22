@@ -14,6 +14,9 @@ namespace ConsoleApplication1
             var doc = Novacode.DocX.Create(@"MyFile.docx");
             var p = doc.InsertParagraph();
             p.Append("Hello World");
+            var i = doc.AddImage(@"purple.png");
+            var p2 = doc.InsertParagraph();
+            p2.AppendPicture(i.CreatePicture());
             doc.Save();
 
         }

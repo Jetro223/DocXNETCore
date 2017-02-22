@@ -19,7 +19,10 @@
       "imports": "dnxcore50",
       "dependencies": {
         "System.IO.Packaging": "4.0.0",
-        "System.Reflection.TypeExtensions": "4.1.0"
+        "System.Reflection.TypeExtensions": "4.1.0",
+        "System.ComponentModel.Primitives": "4.3.0",
+        "CoreCompat.System.Drawing": "1.0.0-beta006",
+        "System.Security.Principal.Windows": "4.0.0"
       }
     }
   },

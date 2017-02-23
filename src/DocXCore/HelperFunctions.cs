@@ -311,7 +311,7 @@ namespace Novacode
             Assembly assembly = typeof(HelperFunctions).GetTypeInfo().Assembly;
 
             // Open a Stream to the embedded resource.
-            Stream stream = assembly.GetManifestResourceStream(manifest_resource_name.Replace("Novacode", "DocX"));
+            Stream stream = assembly.GetManifestResourceStream(manifest_resource_name.Replace("Novacode", "DocXCore"));
 
             int i = 0;
             foreach (string resource in assembly.GetManifestResourceNames())

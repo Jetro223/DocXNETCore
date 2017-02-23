@@ -1,0 +1,45 @@
+{
+  "version": "1.0.2-*",
+  "description": "DocX is a .NET library that allows developers to manipulate Word 2007 files, in an easy and intuitive manor. This is a fork of DocX for .NET Core. ",
+  
+  "authors": [ "Catahl Coffey" ],
+  "packOptions": {
+    "releaseNotes": "Added .NET Core Support",
+    "tags": [ "Word", "DocX" ],
+    "owners": [ "jetro223" ],
+    "iconUrl": "http://download.codeplex.com/Project/Download/FileDownload.aspx?ProjectName=docx&amp;DownloadId=83756&amp;Build=17950",
+    "projectUrl": "http://docx.codeplex.com/",
+    "licenseUrl": "http://docx.codeplex.com/license"
+  },
+
+  "dependencies": {
+    "Microsoft.Extensions.DependencyModel": "1.1.0",
+    "NETStandard.Library": "1.6.0",
+    "NuGet.CommandLine": "3.5.0"
+  },
+
+  "frameworks": {
+    "net452": {
+      "frameworkAssemblies": {
+        "System.Drawing": "4.0.0.0",
+        "System.Xml": "4.0.0.0",
+        "System.Xml.Linq": "4.0.0.0",
+        "WindowsBase": "4.0.0.0"
+      }
+    },
+    "netstandard1.6": {
+      "imports": "dnxcore50",
+      "dependencies": {
+        "System.IO.Packaging": "4.0.0",
+        "System.Reflection.TypeExtensions": "4.1.0",
+        "System.ComponentModel.Primitives": "4.3.0",
+        "CoreCompat.System.Drawing": "1.0.0-beta006",
+        "System.Security.Principal.Windows": "4.0.0"
+      }
+    }
+  },
+  "buildOptions": {
+    "embed": [ "Resources/*" ]
+  }
+
+}

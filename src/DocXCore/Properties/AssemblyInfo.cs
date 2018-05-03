@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("Docx")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("A fork of the DocX Project for .NET Core")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("DocX")]
 [assembly: AssemblyProduct("Docx")]

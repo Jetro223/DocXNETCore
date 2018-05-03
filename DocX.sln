@@ -1,22 +1,19 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.27428.2043
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{71370A98-6061-43F8-996D-E1D67B8E522E}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{FBEF23E6-99DF-4865-93AF-1F8DA991D32F}"
-	ProjectSection(SolutionItems) = preProject
-		global.json = global.json
-	EndProjectSection
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "DocXCore", "src\DocXCore\DocXCore.xproj", "{AA5D4778-4829-4EED-8957-19EE51E2DE5E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DocXCore", "src\DocXCore\DocXCore.csproj", "{AA5D4778-4829-4EED-8957-19EE51E2DE5E}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Console_NETCore", "src\ConsoleApp1\Console_NETCore.xproj", "{0D48678C-6038-4AF2-9EB8-936FF18CFFED}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleApp1", "src\ConsoleApp1\ConsoleApp1.csproj", "{0D48678C-6038-4AF2-9EB8-936FF18CFFED}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Console_NET452", "ConsoleApplication1\Console_NET452.csproj", "{E0357C33-1D97-44AB-9D44-60FFA638D2C7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Console_NET471", "ConsoleApplication1\Console_NET471.csproj", "{E0357C33-1D97-44AB-9D44-60FFA638D2C7}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "DocX.UnitTest", "src\DocX.UnitTest\DocX.UnitTest.xproj", "{4B113D33-3707-43A9-98F5-FAB24C80FDD8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DocX.UnitTest", "src\DocX.UnitTest\DocX.UnitTest.csproj", "{4B113D33-3707-43A9-98F5-FAB24C80FDD8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -48,5 +45,8 @@ Global
 		{AA5D4778-4829-4EED-8957-19EE51E2DE5E} = {71370A98-6061-43F8-996D-E1D67B8E522E}
 		{0D48678C-6038-4AF2-9EB8-936FF18CFFED} = {71370A98-6061-43F8-996D-E1D67B8E522E}
 		{4B113D33-3707-43A9-98F5-FAB24C80FDD8} = {71370A98-6061-43F8-996D-E1D67B8E522E}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {AC296EF9-DB5C-4A73-9E48-A5960452C679}
 	EndGlobalSection
 EndGlobal

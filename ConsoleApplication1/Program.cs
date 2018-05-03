@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Xceed.Words.NET;
 
 
 namespace ConsoleApplication1
@@ -11,7 +12,7 @@ namespace ConsoleApplication1
     {
         static void Main(string[] args)
         {
-            var doc = Novacode.DocX.Create(@"MyFile.docx");
+            var doc = DocX.Create(@"MyFile.docx");
             var p = doc.InsertParagraph();
             p.Append("Hello World");
             var i = doc.AddImage(@"purple.png");

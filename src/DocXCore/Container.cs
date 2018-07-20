@@ -473,6 +473,32 @@ namespace Novacode
 
             return uniqueResults.Keys.ToList();  // return the unique list of results
         }
+        
+        public virtual void ReplaceTextWithImage(string searchValue, Picture newPicture, bool trackChanges = false, RegexOptions options = RegexOptions.None, Formatting newFormatting = null, Formatting matchFormatting = null, MatchFormattingOptions formattingOptions = MatchFormattingOptions.SubsetMatch, bool escapeRegEx = true, bool useRegExSubstitutions = false)
+        {
+            if (string.IsNullOrEmpty(searchValue))
+                throw new ArgumentException("oldValue cannot be null or empty", "searchValue");
+
+            if (newPicture == null)
+                throw new ArgumentException("newPicture cannot be null or empty", "newPicture");
+            // ReplaceTextWithImage in Headers of the document.
+            var headerList = new List<Header> { Document.Headers.first, Document.Headers.even, Document.Headers.odd };
+            foreach (var header in headerList)
+                if (header != null)
+                    foreach (var paragraph in header.Paragraphs)
+                        paragraph.ReplaceTextWithImage(searchValue, newPicture, trackChanges, options, newFormatting, matchFormatting, formattingOptions, escapeRegEx, useRegExSubstitutions);
+
+            // ReplaceTextWithImage int main body of document.
+            foreach (var paragraph in Paragraphs)
+                paragraph.ReplaceTextWithImage(searchValue, newPicture, trackChanges, options, newFormatting, matchFormatting, formattingOptions, escapeRegEx, useRegExSubstitutions);
+            
+            // ReplaceTextWithImage in Footers of the document.
+            var footerList = new List<Footer> { Document.Footers.first, Document.Footers.even, Document.Footers.odd };
+            foreach (var footer in footerList)
+                if (footer != null)
+                    foreach (var paragraph in footer.Paragraphs)
+                        paragraph.ReplaceTextWithImage(searchValue, newPicture, trackChanges, options, newFormatting, matchFormatting, formattingOptions, escapeRegEx, useRegExSubstitutions);
+        }
 
         public virtual void ReplaceText(string searchValue, string newValue, bool trackChanges = false, RegexOptions options = RegexOptions.None, Formatting newFormatting = null, Formatting matchFormatting = null, MatchFormattingOptions formattingOptions = MatchFormattingOptions.SubsetMatch, bool escapeRegEx = true, bool useRegExSubstitutions = false)
         {

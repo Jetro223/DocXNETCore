@@ -3943,6 +3943,63 @@ namespace Novacode
                 }
             }
         }
+	
+	public void ReplaceTextWithImage(string oldValue, Picture newPicture, bool trackChanges = false, RegexOptions options = RegexOptions.None, Formatting newFormatting = null, Formatting matchFormatting = null, MatchFormattingOptions fo = MatchFormattingOptions.SubsetMatch, bool escapeRegEx = true, bool useRegExSubstitutions = false)
+        {
+            string tText = Text;
+            MatchCollection mc = Regex.Matches(tText, escapeRegEx ? Regex.Escape(oldValue) : oldValue, options);
+
+            // Loop through the matches in reverse order
+            foreach (Match m in mc.Cast<Match>().Reverse())
+            {
+                // Assume the formatting matches until proven otherwise.
+                bool formattingMatch = true;
+
+                // Does the user want to match formatting?
+                if (matchFormatting != null)
+                {
+                    // The number of characters processed so far
+                    int processed = 0;
+
+                    do
+                    {
+                        // Get the next run effected
+                        Run run = GetFirstRunEffectedByEdit(m.Index + processed);
+
+                        // Get this runs properties
+                        XElement rPr = run.Xml.Element(XName.Get("rPr", DocX.w.NamespaceName));
+
+                        if (rPr == null)
+                            rPr = new Formatting().Xml;
+
+                        /* 
+                         * Make sure that every formatting element in f.xml is also in this run,
+                         * if this is not true, then their formatting does not match.
+                         */
+                        if (!HelperFunctions.ContainsEveryChildOf(matchFormatting.Xml, rPr, fo))
+                        {
+                            formattingMatch = false;
+                            break;
+                        }
+
+                        // We have processed some characters, so update the counter.
+                        processed += run.Value.Length;
+
+                    } while (processed < m.Length);
+                }
+
+                // If the formatting matches, do the replace.
+                if (formattingMatch)
+                {
+                    InsertPicture(newPicture, m.Index + m.Length);
+                    
+                    if (m.Length > 0)
+                        RemoveText(m.Index, m.Length, trackChanges);
+                }
+            }
+        }
+
+
 
 		/// <summary>
 		/// Find pattern regex must return a group match.

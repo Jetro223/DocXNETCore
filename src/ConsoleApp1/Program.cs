@@ -14,6 +14,13 @@ namespace ConsoleApp1
             var i = doc.AddImage("purple.png");
             var p2 = doc.InsertParagraph();
             p2.AppendPicture(i.CreatePicture());
+
+            doc.AddHeaders();
+            var pic = i.CreatePicture();
+            var hp = doc.Headers.odd.InsertParagraph();
+            hp.InsertPicture(pic);
+            hp.InsertParagraphBeforeSelf(doc.InsertParagraph());
+
             doc.Save();
 
         }

@@ -1752,7 +1752,7 @@ namespace Novacode
             (
                 new XElement(DocX.w + t.ToString(),
                     new XAttribute(DocX.w + "id", 0),
-                    new XAttribute(DocX.w + "author", WindowsIdentity.GetCurrent().Name),
+                    new XAttribute(DocX.w + "author", HelperFunctions.GetAuthorName()),
                     new XAttribute(DocX.w + "date", edit_time),
                 content)
             );

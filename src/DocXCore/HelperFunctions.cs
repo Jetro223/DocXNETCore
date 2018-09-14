@@ -23,6 +23,15 @@ namespace Novacode
                 return string.IsNullOrEmpty(value.Trim());
             }
 
+        internal static string GetAuthorName()
+        {
+#if NETFRAMEWORK
+            return WindowsIdentity.GetCurrent().Name;
+#else
+            return string.Empty;
+#endif
+        }
+
         /// <summary>
         /// Checks whether 'toCheck' has all children that 'desired' has and values of 'val' attributes are the same
         /// </summary>
@@ -411,7 +420,7 @@ namespace Novacode
             (
                 new XElement(DocX.w + t.ToString(),
                     new XAttribute(DocX.w + "id", 0),
-                    new XAttribute(DocX.w + "author", WindowsIdentity.GetCurrent().Name),
+                    new XAttribute(DocX.w + "author", GetAuthorName()),
                     new XAttribute(DocX.w + "date", edit_time),
                 content)
             );

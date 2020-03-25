@@ -1431,8 +1431,13 @@ namespace Novacode
                     return;
             }
             String remote_Id = remote_rel.Id;
-
-            String remote_hash = ComputeMD5HashString(remote_pp.GetStream());
+            
+            String remote_hash;
+            using (var remote_pp_stream = remote_pp.GetStream())
+            {
+                remote_hash = ComputeMD5HashString(remote_pp_stream);
+            }   
+            
             var image_parts = package.GetParts().Where(pp => pp.ContentType.Equals(contentType));
 
             bool found = false;

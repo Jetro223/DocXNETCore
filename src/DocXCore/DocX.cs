@@ -1443,7 +1443,12 @@ namespace Novacode
             bool found = false;
             foreach (var part in image_parts)
             {
-                String local_hash = ComputeMD5HashString(part.GetStream());
+                String local_hash;
+                using (var part_stream = part.GetStream())
+                {
+                    local_hash = ComputeMD5HashString(part_stream);
+                }
+                    
                 if (local_hash.Equals(remote_hash))
                 {
                     // This image already exists in this document.

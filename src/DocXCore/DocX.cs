@@ -3392,7 +3392,7 @@ namespace Novacode
                         {
                             string imagePartUri = Path.Combine(Path.GetDirectoryName(relsPart.Uri.ToString()),
                                 attribute.Value);
-                            imagePartUri = Path.GetFullPath(imagePartUri.Replace("\\_rels", string.Empty));
+                            imagePartUri = Path.GetFullPath(imagePartUri.Replace("\\_rels", string.Empty).Replace("/_rels", string.Empty));
                             imagePartUri = imagePartUri.Replace(Path.GetFullPath("\\"), string.Empty).Replace("\\", "/");
 
                             if (!imagePartUri.StartsWith("/"))

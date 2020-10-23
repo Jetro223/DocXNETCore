@@ -227,7 +227,10 @@ namespace Novacode
 
             // If the internal document contains no /word/numbering.xml create one.
             if (!Document.package.PartExists(numberingUri))
+            {
                 Document.numbering = HelperFunctions.AddDefaultNumberingXml(Document.package);
+                Document.numberingPart = Document.package.GetPart(numberingUri);
+            }
         }
     }
 }

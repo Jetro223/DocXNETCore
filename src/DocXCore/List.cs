@@ -218,7 +218,9 @@ namespace Novacode
         {
             var num = Document.numbering.Descendants().First(d => d.Name.LocalName == "num" && d.GetAttribute(DocX.w + "numId").Equals(numId.ToString()));
             var abstractNumId = num.Descendants().First(d => d.Name.LocalName == "abstractNumId");
-            return Document.numbering.Descendants().First(d => d.Name.LocalName == "abstractNum" && d.GetAttribute("abstractNumId").Equals(abstractNumId.Value));
+            return Document.numbering.Descendants()
+                .First(d => d.Name.LocalName == "abstractNum" && d.GetAttribute(DocX.w + "abstractNumId")
+                .Equals(abstractNumId.GetAttribute(DocX.w + "val")));
         }
 
         private void ValidateDocXNumberingPartExists()
